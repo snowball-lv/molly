@@ -190,12 +190,23 @@ pmode:
 	mov esp, 0x7ffff
 	mov ebp, esp
 	
+	mov eax, 0
+	mov al, [BOOT_DRIVE]
+	push eax
+	
 	call STAGE2C
+	
+	add esp, 4
 	
 	hlt
 	
 times 1024 - ($ - $$) db 0
 STAGE2C:
+	
+	
+	
+	
+	
 	
 	
 	

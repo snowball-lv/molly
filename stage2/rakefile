@@ -23,6 +23,7 @@ end
 
 file "out/stage2c.bin" => "out/stage2c.exe" do
 	sh "objcopy -O binary " \
+		"-j .start " \
 		"-j .text " \
 		"-j .data " \
 		"-j .rdata " \
