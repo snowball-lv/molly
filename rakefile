@@ -1,0 +1,43 @@
+
+
+task :default do
+	Dir.chdir("boot") do
+		ruby "-S", "rake"
+	end
+	sh "lua fat16.lua"
+	Dir.chdir("stage2") do
+		ruby "-S", "rake"
+	end
+	Dir.chdir("kernel") do
+		ruby "-S", "rake"
+	end
+	sh "imdisk -a -m r: -f hd.img"
+	cp("stage2/bin/stage2.bin", "r:")
+	cp("kernel/bin/kernel.exe", "r:")
+	sh "imdisk -d -m r:"
+	puts ""
+	puts "Success"
+end
+
+task :clean do
+	Dir.chdir("boot") do
+		ruby "-S", "rake", "clean"
+	end
+	Dir.chdir("stage2") do
+		ruby "-S", "rake", "clean"
+	end
+	Dir.chdir("kernel") do
+		ruby "-S", "rake", "clean"
+	end
+end
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,12 @@
+require "rake/clean"
+
+file "boot.bin" => "boot.asm" do
+	sh "nasm -f bin boot.asm -o boot.bin"
+end
+
+task :default => "boot.bin"
+
+CLEAN.include("boot.bin")
+
+
+

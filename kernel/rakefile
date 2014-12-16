@@ -1,0 +1,50 @@
+require "rake/clean"
+
+SRC = FileList["src/*.c"]
+
+OBJ = SRC.map do |f|
+	f.ext(".o").sub("src", "out")
+end
+
+directory "bin"
+directory "out"
+
+file "bin/kernel.exe" => OBJ do
+	sh "ld -T src/kernel.ld #{OBJ.join(" ")}"
+end
+
+CFLAGS =
+	"-c " \
+	"-std=c99 " \
+	"-Wall " \
+	"-Wextra " \
+	"-ffreestanding " \
+	"-nostdlib " \
+	"-nostdinc " \
+	"-fno-exceptions " \
+	"-lgcc " \
+	"-Isrc/inc"
+
+rule ".o" => [
+	proc { |tn| tn.sub("out", "src").ext(".c") } 
+] do |t|
+	sh "gcc #{CFLAGS} #{t.source} -o #{t.name}"
+end
+	
+task :default => ["bin", "out", "bin/kernel.exe"]
+
+CLEAN.include("bin")
+CLEAN.include("out")
+
+
+
+
+
+
+
+
+
+
+
+
+

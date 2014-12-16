@@ -1,0 +1,77 @@
+require "rake/clean"
+
+SRC = FileList["src/*.c", "src/*.asm"]
+
+SRC.delete("src/stub.asm");
+	
+OBJ = SRC.map do |f|
+	f.ext(".o").sub("src", "out")
+end
+
+directory "bin"
+directory "out"
+
+file "bin/stage2.bin" => ["out/stub.bin", "out/stage2c.bin"] do
+	sh "copy /b " \
+		"out\\stub.bin + out\\stage2c.bin " \
+		"bin\\stage2.bin"
+end
+
+file "out/stub.bin" => "src/stub.asm" do
+	sh "nasm -f bin src/stub.asm -o out/stub.bin"
+end
+
+file "out/stage2c.bin" => "out/stage2c.exe" do
+	sh "objcopy -O binary " \
+		"-j .text " \
+		"-j .data " \
+		"-j .rdata " \
+		"-j .bss " \
+		"out/stage2c.exe out/stage2c.bin"
+end
+
+file "out/stage2c.exe" => OBJ do
+	sh "ld -T src/stage2c.ld #{OBJ.join(" ")}"
+end
+
+CFLAGS =
+	"-c " \
+	"-std=c99 " \
+	"-Wall " \
+	"-Wextra " \
+	"-ffreestanding " \
+	"-nostdlib " \
+	"-nostdinc " \
+	"-fno-exceptions " \
+	"-lgcc " \
+	"-Isrc/inc"
+
+rule ".o" => [
+	proc { |tn| tn.sub("out", "src").ext(".c") } 
+] do |t|
+	sh "gcc #{CFLAGS} #{t.source} -o #{t.name}"
+end
+
+rule ".o" => [
+	proc { |tn| tn.sub("out", "src").ext(".asm") } 
+] do |t|
+	sh "nasm -f win32 #{t.source} -o #{t.name}"
+end
+
+task :default => ["bin", "out", "bin/stage2.bin"]
+
+CLEAN.include("bin")
+CLEAN.include("out")
+
+
+
+
+
+
+
+
+
+
+
+
+

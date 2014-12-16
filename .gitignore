@@ -1,0 +1,12 @@
+
+#directories
+**/bin
+**/out
+
+#object files
+**/*.bin
+**/*.exe
+**/*.o
+
+#logs
+oslog.txt
