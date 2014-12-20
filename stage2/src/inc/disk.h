@@ -2,5 +2,6 @@
 
 #include <types.h>
 
-void read(u32 sector, u32 count, u8 *buffer);
+u32 read(u8 drive, u32 sector, s8 *buffer);
+
 

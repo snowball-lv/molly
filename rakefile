@@ -14,6 +14,7 @@ task :default do
 	sh "imdisk -a -m r: -f hd.img"
 	cp("stage2/bin/stage2.bin", "r:")
 	cp("kernel/bin/kernel.exe", "r:")
+	cp("kernel/bin/kernel.bin", "r:")
 	sh "imdisk -d -m r:"
 	puts ""
 	puts "Success"

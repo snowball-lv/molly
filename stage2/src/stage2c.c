@@ -1,6 +1,8 @@
 #include <vga.h>
 #include <io.h>
 #include <types.h>
+#include <disk.h>
+#include <stdlib.h>
 
 int stage2(u8 drive) {
 
@@ -13,54 +15,124 @@ int stage2(u8 drive) {
 	clear();
 	
 	println("booting...");
-	
 	print("boot drive: ");
-	printHex(drive);
+	printHex(drive); println("");
+	
+	s8 boot[512];
+	read(drive, 0, boot);
+	
+	u16 rootEntries = *(u16 *)&boot[17];
+	print("root entries: ");
+	printU32(rootEntries);
 	println("");
 	
-	u8 *boot = (u8 *)0x7c00;
-	
-	u16 bps = *(u16 *)(boot + 11);
+	u16 bps = *(u16 *)&boot[11];
 	print("bytes per sector: ");
 	printU32(bps);
 	println("");
 	
-	u16 entries = *(u16 *)(boot + 17);
-	print("root entries: ");
-	printU32(entries);
+	u16 rootSectors = (rootEntries * 32 + 16) / bps;
+	print("root sectors: ");
+	printU32(rootSectors);
 	println("");
 	
-	u8 fats = *(boot + 16);
+	u8 FATs = boot[16];
 	print("number of FATs: ");
-	printU32(fats);
+	printU32(FATs);
 	println("");
 	
-	u16 spf = *(u16 *)(boot + 22);
+	u16 spf = *(u16 *)&boot[22];
 	print("sectors per FAT: ");
 	printU32(spf);
 	println("");
 	
-	u16 res = *(u16 *)(boot + 14);
+	u16 reserved = *(u16 *)&boot[14];
 	print("reserved sectors: ");
-	printU32(res);
+	printU32(reserved);
 	println("");
 	
-	u32 hidden = *(u32 *)(boot + 28);
-	print("hidden sectors: ");
-	printU32(hidden);
+	u16 rootStart = FATs * spf + reserved;
+	print("start of root: ");
+	printU32(rootStart);
 	println("");
 	
-	u8 spc = *(boot + 13);
+	u16 data = rootStart + rootSectors;
+	print("start of data: ");
+	printU32(data);
+	println("");
+	
+	u8 spc = boot[13];
 	print("sectors per cluster: ");
 	printU32(spc);
 	println("");
 	
+	println("looking for kernel...");
+	
+	s8 *name = "KERNEL  BIN";
+	s8 dir[32];
+	
+	for (u16 i = 0; i < rootSectors; i++) {
+		s8 sec[512];
+		read(drive, rootStart + i, sec);
+		for (int k = 0; k < 512; k += 32) {
+			if (strcmp(name, &sec[k], 11)) {
+				copy((u8 *)&sec[k], (u8 *)dir, 32);
+			}
+		}
+	}
+	
+	if (!strcmp(name, dir, 11)) {
+		println("couldn't find kernel.bin");
+		return 0xdeadc0de;
+	} else {
+		println("kernel.bin found");
+	}
+	
+	u16 cluster = *(u16 *)&dir[26];
+	print("first cluster: ");
+	printU32(cluster);
+	println("");
+	
+	u8 *kernel = (u8 *)0x100000;
+	u32 count = 0;
+	
+	while (1) {
+	
+		s8 buffer[512];
+		for (u8 i = 0; i < spc; i++) {
+			u32 sec = (cluster - 2) * spc + data;
+			read(drive, sec, buffer);
+			copy((u8 *)buffer, kernel, 512);
+			kernel += 512;
+			count++;
+		}
+	
+		u32 off = (cluster * 2) / 512;
+		read(drive, reserved + off, buffer);
+		u16 next = *(u16 *)&buffer[cluster * 2];
+		
+		if (next >= 0xfff8)
+			break;
+		
+		cluster = next;
+	}
+	
+	printU32(count);
+	println(" sectors read");
+	println("entering kernel");
+	
+	typedef u32 (*kernel_main)();
+	kernel_main kmain = (kernel_main)0x100000;
+	u32 code = kmain();
+	
+	print("kernel exited with code: ");
+	printU32(code);
+	print(" : ");
+	printHex(code);
+	println("");
+	
 	return 0xbabecafe;
 }
-
-
-
-
 
 
 

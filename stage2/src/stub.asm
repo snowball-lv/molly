@@ -8,7 +8,7 @@ GDT_START:
 	dd 0
 	dd 0
 	
-	;code descriptor
+	;pmode code descriptor
 	dw 0xffff
 	dw 0
 	db 0
@@ -16,13 +16,30 @@ GDT_START:
 	db 11001111b
 	db 0
 	
-	;data descriptor
+	;pmode data descriptor
 	dw 0xffff
 	dw 0
 	db 0
 	db 10010010b
 	db 11001111b
 	db 0
+	
+	;real code descriptor
+	dw 0xffff
+	dw 0
+	db 0
+	db 10011010b
+	db 0xf
+	db 0
+	
+	;real data descriptor
+	dw 0xffff
+	dw 0
+	db 0
+	db 10010010b
+	db 0xf
+	db 0
+	
 GDT_END:
 
 GDT:
@@ -199,9 +216,116 @@ pmode:
 	add esp, 4
 	
 	hlt
+
+;disk address packet structure
+align 4
+DAP:
+DAP_SIZE		db 16
+DAP_0			db 0
+DAP_SECTORS		dw 1
+DAP_OFFSET		dw 0x0
+DAP_SEGMENT		dw 0x0
+DAP_START		dd 0
+DAP_HIGH		dd 0
+	
+times 512 - ($ - $$) db 0
+
+;0x700
+;int (*)(u8 drive, u32 sector, u16 seg, u16 off)
+read:
+	push ebp
+	mov ebp, esp
+	push esi
+	
+	mov edx, [ebp + 8]
+	mov eax, [ebp + 12]
+	mov [DAP_START], eax
+	mov eax, [ebp + 16]
+	mov [DAP_SEGMENT], ax
+	mov eax, [ebp + 20]
+	mov [DAP_OFFSET], ax
+	
+	;load 16bit data selectos
+	mov ax, 0x20
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+	
+	;load 16bit code selector
+	jmp 0x18:.pmode16
+	bits 16
+	.pmode16:
+	
+	;disable pmode
+	mov eax, cr0
+	and al, 0xfe
+	mov cr0, eax
+	
+	;load code segment
+	jmp 0:.real
+	.real:
+	
+	;load data segments
+	mov ax, 0
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+	
+	sti
+	
+	;error
+	mov ecx, 0
+	
+	;read the disk
+	mov ah, 0x42
+	mov si, DAP
+	int 0x13
+	jc .error
+	jmp .end
+	.error:
+	mov ecx, 1
+	.end:
+	
+	cli
+	
+	;enable pmode
+	mov eax, cr0
+	or al, 1
+	mov cr0, eax
+	
+	;load code selector
+	jmp 0x8:.pmode
+	bits 32
+	.pmode:
+	
+	;load data selectors
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+	
+	;set error
+	mov eax, ecx
+	
+	pop esi
+	mov esp, ebp
+	pop ebp
+	ret
 	
 times 1024 - ($ - $$) db 0
 STAGE2C:
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
