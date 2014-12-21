@@ -107,6 +107,11 @@ start:
 	mov sp, 0xffff
 	mov bp, sp
 	
+	;set 80x25 video mode
+	mov ah, 0x0
+	mov al, 0x3
+	int 0x10
+	
 	;install gdt
 	cli
 	lgdt [GDT]

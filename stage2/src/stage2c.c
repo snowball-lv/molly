@@ -18,6 +18,12 @@ int stage2(u8 drive) {
 	print("boot drive: ");
 	printHex(drive); println("");
 	
+	println("VGA signatures:");
+	print("    "); println((s8 *)0xc0025);
+	print("    "); println((s8 *)0xc007d);
+	print("    "); println((s8 *)0xc0008);
+	print("    "); println((s8 *)0xc0032);
+	
 	s8 boot[512];
 	read(drive, 0, boot);
 	
@@ -123,15 +129,10 @@ int stage2(u8 drive) {
 	
 	typedef u32 (*kernel_main)();
 	kernel_main kmain = (kernel_main)0x100000;
-	u32 code = kmain();
 	
-	print("kernel exited with code: ");
-	printU32(code);
-	print(" : ");
-	printHex(code);
-	println("");
+	kmain();
 	
-	return 0xbabecafe;
+	return 0xdeadc0de;
 }
 
 

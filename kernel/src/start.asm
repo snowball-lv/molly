@@ -11,6 +11,5 @@ start:
 	
 	call _kernel_main
 	
-	pop ebp
-	ret
+	hlt
 	
