@@ -11,8 +11,9 @@ typedef unsigned char 			u8;
 
 typedef s32 	word;
 typedef s8 		byte;
+typedef u8 		ubyte;
 typedef u32 	uword;
 
-#define null	0
+typedef byte *string;
 
-#define WORD_BITS	32
+#define null	0

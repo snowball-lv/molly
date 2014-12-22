@@ -5,7 +5,6 @@
 #define VGA_MEM 		0xb8000
 #define WIDTH 			80
 #define HEIGHT 			25
-#define NL 				'\n'
 #define VGA_BLACK 		0x0
 #define VGA_LIGHT_GRAY 	0x7
 
@@ -64,14 +63,9 @@ static void putc(byte character) {
 	xPos++;
 }
 
-void print(const byte *str) {
+static void puts(string str) {
 	while (*str != 0)
 		putc(*str++);
-}
-
-void println(const byte *str) {
-	print(str);
-	putc(NL);
 }
 
 //don't touch
@@ -108,12 +102,52 @@ static byte *itoa(word value, byte *str, word base) {
     return rc;
 }
 
-void printWord(word value) {
-	byte buffer[WORD_BITS + 1];
+static void printDec(word value) {
+	byte buffer[(sizeof(word) * 8) + 1];
 	byte *str = itoa(value, buffer, 10);
-	print(str);
+	puts(str);
 }
 
+static void printHex(word value) {
+	byte buffer[(sizeof(word) * 8) + 1];
+	byte *str = itoa(value, buffer, 16);
+	puts("0x");
+	puts(str);
+}
+
+void printf(string format, ...) {
+	va_list args;
+    va_start(args, format);
+	
+	while (*format != 0) {
+		switch (*format) {
+		case '%': 
+			switch (*(format + 1)) {
+			case 'd':
+				printDec(va_arg(args, word));
+				format += 2;
+			break;
+			case 'x':
+				printHex(va_arg(args, word));
+				format += 2;
+			break;
+			case 'c':
+				putc(va_arg(args, byte));
+				format += 2;
+			break;
+			case 's':
+				puts(va_arg(args, string));
+				format += 2;
+			break;
+			default: putc(*format++); break;
+			}
+		break;
+		default: putc(*format++); break;
+		}
+	}
+	
+	va_end(args);
+}
 
 
 

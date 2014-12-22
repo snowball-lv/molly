@@ -2,7 +2,12 @@
 
 #include <types.h>
 
+#define NL	'\n'
+
 void clear();
-void print(const byte *str);
-void println(const byte *str);
-void printWord(word value);
+void printf(string format, ...);
+
+#define printfln(args...) \
+	(printf(args), printf("%c", NL))
+	
+	

@@ -35,7 +35,8 @@ CFLAGS =
 	"-nostdinc " \
 	"-fno-exceptions " \
 	"-lgcc " \
-	"-Isrc/inc"
+	"-Isrc/inc " \
+	"-mno-ms-bitfields"
 
 rule ".o" => [
 	proc { |tn| tn.sub("out", "src").ext(".c") } 
