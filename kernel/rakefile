@@ -27,7 +27,7 @@ end
 
 CFLAGS =
 	"-c " \
-	"-std=c99 " \
+	"-std=gnu99 " \
 	"-Wall " \
 	"-Wextra " \
 	"-ffreestanding " \

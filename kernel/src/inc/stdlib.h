@@ -3,6 +3,7 @@
 #include <types.h>
 
 void copy(byte *src, byte *dst, uword num);
+void memset(byte *ptr, byte value, uword num);
 
 typedef ubyte *va_list;
 	
