@@ -28,18 +28,37 @@ void initPIC() {
 	out8(MASTER_DATA, 0b00000001);
 	out8(SLAVE_DATA, 0b00000001);
 	
-	//done. null the registers
-	out8(MASTER_DATA, 0);
-	out8(SLAVE_DATA, 0);
+	//disable all IRQs
+	pic_write_data(PIC_MASTER, 0xff);
+	pic_write_data(PIC_SLAVE, 0xff);
 }
 
+u8 pic_read_data(u8 pic) {
 
+	u16 port = (pic == PIC_MASTER) ?
+		MASTER_DATA :
+		SLAVE_DATA;
+	
+	return in8(port);
+}
 
+void pic_write_data(u8 pic, u8 data) {
 
+	u16 port = (pic == PIC_MASTER) ?
+		MASTER_DATA :
+		SLAVE_DATA;
+		
+	out8(port, data);
+}
 
+void eoi(u8 pic) {
 
-
-
+	u16 port = (pic == PIC_MASTER) ?
+		MASTER_COMMAND :
+		SLAVE_COMMAND;
+		
+	out8(port, 0x20);
+}
 
 
 

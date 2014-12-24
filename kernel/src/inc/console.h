@@ -2,12 +2,13 @@
 
 #include <types.h>
 
-#define NL	'\n'
+#define LF	'\n'
+#define CR	'\r'
 
 void clear();
 void printf(string format, ...);
 
 #define printfln(args...) \
-	(printf(args), printf("%c", NL))
+	(printf(args), printf("%c", LF))
 	
 	

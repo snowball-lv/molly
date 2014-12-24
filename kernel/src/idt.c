@@ -24,7 +24,7 @@ static IDTDesc 	_idt[MAX_INTERRUPTS];
 
 //idt_asm.asm
 void lidt(IDTR *idtr);
-void wrapper();
+void default_isr_wrapper();
 
 void initIDT() {
 
@@ -32,14 +32,8 @@ void initIDT() {
 	printfln("sizeof(IDTR): %d", sizeof(IDTR));
 	printfln("sizeof(IDTDesc): %d", sizeof(IDTDesc));
 	
-	u32 addr = (u32)&wrapper;
-	for (word i = 0; i < MAX_INTERRUPTS; i++) {
-		_idt[i].addrLow = addr & 0xffff;
-		_idt[i].selector = CODE_SEL;
-		_idt[i].zero = 0;
-		_idt[i].flags = 0b10001110;
-		_idt[i].addrHigh = (addr >> 16) & 0xffff;
-	}
+	for (word i = 0; i < MAX_INTERRUPTS; i++)
+		set_gate(i, (u32)&default_isr_wrapper);
 	
 	_idtr.size = sizeof(IDTDesc) * MAX_INTERRUPTS - 1;
 	_idtr.addr = (u32)&_idt;
@@ -47,10 +41,20 @@ void initIDT() {
 	lidt(&_idtr);
 }
 
-//called from wrapper() in idt_asm.asm
-void handler() {
+void set_gate(word id, u32 isr) {
+	_idt[id].addrLow = isr & 0xffff;
+	_idt[id].selector = CODE_SEL;
+	_idt[id].zero = 0;
+	_idt[id].flags = 0b10001110;
+	_idt[id].addrHigh = (isr >> 16) & 0xffff;
+}
+
+void default_isr() {
 	printfln("*** unhandled exception!");
 }
+
+
+
 
 
 

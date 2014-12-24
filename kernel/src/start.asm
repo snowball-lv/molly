@@ -12,5 +12,8 @@ start:
 	
 	call _kernel_main
 	
+	;spin and sleep forever
+	.loop:
 	hlt
+	jmp .loop
 	

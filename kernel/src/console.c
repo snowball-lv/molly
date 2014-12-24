@@ -51,8 +51,11 @@ static void putc(byte character) {
 	if (xPos == WIDTH)
 		newLine();
 	
-	if (character == NL) {
+	if (character == LF) {
 		newLine();
+		return;
+	} else if (character == CR) {
+		xPos = 0;
 		return;
 	}
 	
@@ -115,6 +118,13 @@ static void printHex(word value) {
 	puts(str);
 }
 
+static void printBin(word value) {
+	byte buffer[(sizeof(word) * 8) + 1];
+	byte *str = itoa(value, buffer, 2);
+	puts(str);
+	puts("b");
+}
+
 void printf(string format, ...) {
 	va_list args;
     va_start(args, format);
@@ -129,6 +139,10 @@ void printf(string format, ...) {
 			break;
 			case 'x':
 				printHex(va_arg(args, word));
+				format += 2;
+			break;
+			case 'b':
+				printBin(va_arg(args, word));
 				format += 2;
 			break;
 			case 'c':

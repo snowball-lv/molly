@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <time.h>
+#include <console.h>
 
 void copy(byte *src, byte *dst, uword num) {
 	for (uword i = 0; i < num; i++)

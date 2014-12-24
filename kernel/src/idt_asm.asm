@@ -2,6 +2,7 @@
 
 section .text
 
+
 ;void lidt(IDTR *idtr);
 global _lidt
 _lidt:
@@ -12,16 +13,14 @@ _lidt:
 	pop ebp
 	ret
 	
-;void wrapper();
-extern _handler
-global _wrapper
-_wrapper:
-	pushad
-    call _handler
-    popad
-    iret
-	
-	
+
+extern _default_isr
+global _default_isr_wrapper
+_default_isr_wrapper:
+	pusha
+	call _default_isr
+	popa
+	iret
 	
 	
 	
