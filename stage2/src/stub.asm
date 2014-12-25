@@ -107,6 +107,25 @@ start:
 	mov sp, 0xffff
 	mov bp, sp
 	
+	;get memory map
+	mov ebx, 0
+	mov di, MEM_MAP
+	.loop:
+		mov eax, 0xe820
+		mov ecx, 24
+		mov edx, 0x534d4150
+		int 15h
+		jc .error
+		add [MEM_MAP_ENTRIES], dword 1
+		add di, 24
+		cmp ebx, 0
+		je .ok
+		jmp .loop
+	.error:
+		cli
+		hlt
+	.ok:
+	
 	;set 80x25 video mode
 	mov ah, 0x0
 	mov al, 0x3
@@ -318,6 +337,11 @@ read:
 	ret
 	
 times 1024 - ($ - $$) db 0
+;memory map
+MEM_MAP_ENTRIES dd 0
+MEM_MAP:
+
+times 4096 - ($ - $$) db 0
 STAGE2C:
 	
 	

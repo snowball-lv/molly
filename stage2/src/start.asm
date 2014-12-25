@@ -19,3 +19,16 @@ start:
 	pop ebp
 	ret
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

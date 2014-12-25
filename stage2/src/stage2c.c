@@ -127,10 +127,19 @@ int stage2(u8 drive) {
 	println(" sectors read");
 	println("entering kernel");
 	
-	typedef u32 (*kernel_main)();
-	kernel_main kmain = (kernel_main)0x100000;
+	typedef struct {
+		u32 size;
+		void *entries;
+	} MemMap;
 	
-	kmain();
+	typedef u32 (*kernel_start)(MemMap *);
+	kernel_start kstart = (kernel_start)0x100000;
+	
+	MemMap mm;
+	mm.size = *(u32 *)0x900;
+	mm.entries = (void *)0x904;
+	
+	kstart(&mm);
 	
 	return 0xdeadc0de;
 }

@@ -48,7 +48,7 @@ static void newLine() {
 
 static void putc(byte character) {
 
-	if (xPos == WIDTH)
+	if (xPos >= WIDTH)
 		newLine();
 	
 	if (character == LF) {
@@ -56,6 +56,9 @@ static void putc(byte character) {
 		return;
 	} else if (character == CR) {
 		xPos = 0;
+		return;
+	}else if (character == TAB) {
+		xPos = xPos % 4 + 4;
 		return;
 	}
 	

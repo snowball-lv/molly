@@ -17,3 +17,15 @@ typedef u32 	uword;
 typedef byte *string;
 
 #define null	0
+
+
+
+
+
+
+
+
+
+
+
+

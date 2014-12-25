@@ -20,3 +20,5 @@ typedef ubyte *va_list;
 	*((type *)(ap - STACK_SIZE(type))))
 
 #define va_end(ap)
+
+#define NAME(m) #m

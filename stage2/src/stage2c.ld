@@ -1,7 +1,7 @@
 OUTPUT(out/stage2c.exe)
 SECTIONS
 {
-	.start (0x900) : {
+	.start (0x1500) : {
 		*(.start)
 	}
 	.text : {
