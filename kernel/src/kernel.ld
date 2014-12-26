@@ -17,6 +17,9 @@ SECTIONS
 	.bss : { 					
 		*(.bss)
 	}
+	.end : { 					
+		*(.end)
+	}
 	/DISCARD/ : {
 		*(.eh_frame)
 	}

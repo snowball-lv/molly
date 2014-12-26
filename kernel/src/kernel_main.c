@@ -28,6 +28,9 @@ typedef struct {
 	MemMapEntry *entries;
 } MemMap;
 
+static byte _kernel_end 
+	__attribute__((section(".end"))) = 0;
+
 word kernel_main(MemMap *mm) {
 
 	clear();
@@ -65,6 +68,24 @@ word kernel_main(MemMap *mm) {
 		
 		printf(", %d,", e->base);
 		printfln(" %d", e->base + e->size);
+	}
+	
+	u64 max_mem = 0;
+	for (uword i = 0; i < mm->size; i++) {
+		MemMapEntry *e = &mm->entries[i];
+		if (e->type == MMAP_AVAILABLE) {
+			u64 max = e->base + e->size;
+			if (max_mem == 0 || max > max_mem)
+				max_mem = max;
+		}
+	}
+	
+	initPMM(max_mem / 1024, (byte *)&_kernel_end);
+	
+	for (uword i = 0; i < mm->size; i++) {
+		MemMapEntry *e = &mm->entries[i];
+		if (e->type == MMAP_AVAILABLE)
+			pmm_free_region(e->base, e-> size);
 	}
 	
 	printfln("kernel exited");
