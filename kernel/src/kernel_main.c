@@ -85,8 +85,12 @@ word kernel_main(MemMap *mm) {
 	for (uword i = 0; i < mm->size; i++) {
 		MemMapEntry *e = &mm->entries[i];
 		if (e->type == MMAP_AVAILABLE)
-			pmm_free_region(e->base, e-> size);
+			pmm_free_region(e->base, e->size);
 	}
+	
+	uword end = (uword)&_kernel_end;
+	pmm_alloc_region(0x100000, end - 0x100000);
+	pmm_alloc_region(end, pmm_size());
 	
 	printfln("kernel exited");
 	return 0xbabecafe;

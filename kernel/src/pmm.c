@@ -7,12 +7,17 @@
 
 static byte 	*_mem_map;
 static word 	_blocks;
+static word 	_map_size;
 
-void pmm_set(word block) {
+word pmm_size() {
+	return _map_size;
+}
+
+static void pmm_set(word block) {
 	_mem_map[block/8] |= (1 << (block % 8));
 }
 
-void pmm_unset(word block) {
+static void pmm_unset(word block) {
 	_mem_map[block/8] &= ~(1 << (block % 8));
 }
 
@@ -24,12 +29,15 @@ void initPMM(uword size, byte *map_addr) {
 
 	printfln("memory: %d kb", size);
 	
-	_blocks = size/4;
+	_blocks = size / 4;
 	printfln("blocks: %d", _blocks);
+	
+	_map_size = (_blocks + 4) / 8;
+	printfln("map size: %d", _map_size);
 	
 	_mem_map = map_addr;
 	
-	memset(_mem_map, 0xff, (_blocks + 4) / 8);
+	memset(_mem_map, 0xff, _map_size);
 }
 
 void pmm_free_region(uword base, uword size) {
@@ -47,6 +55,18 @@ void pmm_free_region(uword base, uword size) {
 	}
 	
 	pmm_set(0);
+}
+
+void pmm_alloc_region(uword base, uword size) {
+	printfln("allocating %d, %d", base ,size);
+	word block = base / BLOCK_SIZE;
+		
+	word count = (size + (BLOCK_SIZE - 1)) / BLOCK_SIZE;
+	printfln("blocks %d", count);
+	while (count) {
+		pmm_set(block++);
+		count--;
+	}
 }
 
 byte *pmm_alloc_block() {
