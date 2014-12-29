@@ -69,19 +69,19 @@ void pmm_alloc_region(uword base, uword size) {
 	}
 }
 
-byte *pmm_alloc_block() {
+void *pmm_alloc_block() {
 	for (word i = 0; i < _blocks; i++) {
 		if (!pmm_test(i)) {
 			pmm_set(i);
 			printfln("allocating block %d", i);
-			return (byte *)(i * BLOCK_SIZE);
+			return (void *)(i * BLOCK_SIZE);
 		}
 	}
 	printfln("*** out of free blocks!");
 	return 0;
 }
 
-void pmm_free_block(byte *ptr) {
+void pmm_free_block(void *ptr) {
 	word block = (uword)ptr / BLOCK_SIZE;
 	printfln("freeing block %d", block);
 	pmm_unset(block);

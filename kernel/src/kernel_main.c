@@ -6,6 +6,7 @@
 #include <pit.h>
 #include <stdlib.h>
 #include <pmm.h>
+#include <vmm.h>
 
 #define MMAP_AVAILABLE 	0x1
 #define MMAP_RESERVED	0x2
@@ -89,8 +90,14 @@ word kernel_main(MemMap *mm) {
 	}
 	
 	uword end = (uword)&_kernel_end;
+	//alloc kernel
 	pmm_alloc_region(0x100000, end - 0x100000);
+	//alloc memory bitmap
 	pmm_alloc_region(end, pmm_size());
+	//alloc stack
+	pmm_alloc_region(0, 0x7ffff);
+	
+	initVMM();
 	
 	printfln("kernel exited");
 	return 0xbabecafe;

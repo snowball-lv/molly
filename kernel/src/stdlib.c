@@ -2,12 +2,12 @@
 #include <time.h>
 #include <console.h>
 
-void copy(byte *src, byte *dst, uword num) {
+void copy(void *src, void *dst, uword num) {
 	for (uword i = 0; i < num; i++)
-		dst[i] = src[i];
+		((byte *)dst)[i] = ((byte *)src)[i];
 }
 
-void memset(byte *ptr, byte value, uword num) {
+void memset(void *ptr, byte value, uword num) {
 	for (uword i = 0; i < num; i++)
-		ptr[i] = value;
+		((byte *)ptr)[i] = value;
 }

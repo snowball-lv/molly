@@ -2,9 +2,9 @@
 
 #include <types.h>
 
-void copy(byte *src, byte *dst, uword num);
+void copy(void *src, void *dst, uword num);
 
-void memset(byte *ptr, byte value, uword num);
+void memset(void *ptr, byte value, uword num);
 
 typedef ubyte *va_list;
 	
