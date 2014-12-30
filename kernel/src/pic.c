@@ -6,6 +6,18 @@
 #define SLAVE_COMMAND 	0xa0
 #define SLAVE_DATA		0xa1
 
+#define READ_ISR	0x0b 
+
+u8 pic_isr(u8 pic) {
+
+	u16 port = (pic == PIC_MASTER) ?
+		MASTER_COMMAND :
+		SLAVE_COMMAND;
+		
+	out8(port, READ_ISR);
+	return in8(port);
+}
+
 void initPIC() {
 
 	//send Initialization Control Word 1
@@ -51,7 +63,7 @@ void pic_write_data(u8 pic, u8 data) {
 	out8(port, data);
 }
 
-void eoi(u8 pic) {
+void pic_eoi(u8 pic) {
 
 	u16 port = (pic == PIC_MASTER) ?
 		MASTER_COMMAND :

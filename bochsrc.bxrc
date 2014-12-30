@@ -9,6 +9,8 @@ boot: disk
 
 #clock: sync=realtime, time0=local
 
+keyboard: serial_delay=200
+
 log:		oslog.txt
 error:		action=report
 info:		action=report

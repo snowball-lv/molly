@@ -2,7 +2,7 @@
 #include <io.h>
 #include <time.h>
 #include <pic.h>
-#include <idt.h>
+#include <isr.h>
 #include <console.h>
 
 #define PIT_HZ			1193182
@@ -11,10 +11,11 @@
 #define COUNTER_2 		0x42
 #define COMMAND_WORD	0x43
 
-//pit_asm.asm
-void pit_isr_wrapper();
-
 static clock_t _ticks;
+
+void pit_isr(word id) {
+	_ticks++;
+}
 
 void initPIT() {
 
@@ -30,7 +31,7 @@ void initPIT() {
 	out8(COUNTER_0, (count >> 8) & 0xff);
 	
 	//set timer isr
-	set_gate(IRQ_BASE + PIC_IRQ_TIMER, (u32)&pit_isr_wrapper);
+	set_isr(IRQ_BASE + PIC_IRQ_TIMER, pit_isr);
 	
 	//initialize ticks
 	_ticks = 0;
@@ -39,10 +40,6 @@ void initPIT() {
 	u8 mask = pic_read_data(PIC_MASTER);
 	mask &= ~(1 << PIC_IRQ_TIMER);
 	pic_write_data(PIC_MASTER, mask);
-}
-
-void pit_isr() {
-	_ticks++;
 }
 
 clock_t clock() {

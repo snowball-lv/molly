@@ -5,6 +5,9 @@ SECTIONS
 	.start (0x100000) : {
 		*(.start)
 	}
+	.bss : { 					
+		*(.bss)
+	}
 	.text : {
 		*(.text)
 	}
@@ -13,9 +16,6 @@ SECTIONS
 	}
 	.rdata : {
 		*(.rdata*)
-	}
-	.bss : { 					
-		*(.bss)
 	}
 	.end : { 					
 		*(.end)

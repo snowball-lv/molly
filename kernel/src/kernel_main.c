@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <pmm.h>
 #include <vmm.h>
+#include <kbd.h>
 
 #define MMAP_AVAILABLE 	0x1
 #define MMAP_RESERVED	0x2
@@ -98,6 +99,7 @@ word kernel_main(MemMap *mm) {
 	pmm_alloc_region(0, 0x7ffff);
 	
 	initVMM();
+	initKBD();
 	
 	printfln("kernel exited");
 	return 0xbabecafe;

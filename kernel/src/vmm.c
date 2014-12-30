@@ -3,7 +3,7 @@
 #include <pmm.h>
 #include <console.h>
 #include <stdlib.h>
-#include <idt.h>
+#include <isr.h>
 
 #define PT_INDEX(x)	(((x) >> 12) & 0x3ff)
 #define PD_INDEX(x)	(((x) >> 22) & 0x3ff)
@@ -26,7 +26,7 @@ static PDirectory *_dir;
 void vmm_load_PDBR(PDirectory *dir);
 void vmm_enable_paging();
 
-static void pf_isr() {
+static void pf_isr(word id, u32 error) {
 	printfln("*** page fault!");
 }
 
@@ -82,7 +82,7 @@ void initVMM() {
 	dir->entries[PD_INDEX(0xc0000000)] = e2;
 	
 	//set PF isr
-	set_gate(14, (u32)&pf_isr);
+	set_isr(14, pf_isr);
 	
 	vmm_switch_pdir(dir);
 	

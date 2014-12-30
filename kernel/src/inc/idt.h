@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-void initIDT();
+#define MAX_INTERRUPTS 256
 
-void set_gate(word id, u32 isr);
+void initIDT();
 

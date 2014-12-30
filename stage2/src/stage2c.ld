@@ -4,6 +4,9 @@ SECTIONS
 	.start (0x1500) : {
 		*(.start)
 	}
+	.bss : { 					
+		*(.bss)
+	}
 	.text : {
 		*(.text)
 	}
@@ -12,9 +15,6 @@ SECTIONS
 	}
 	.rdata : {
 		*(.rdata*)
-	}
-	.bss : { 					
-		*(.bss)
 	}
 	/DISCARD/ : {
 		*(.eh_frame)

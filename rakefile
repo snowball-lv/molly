@@ -11,11 +11,11 @@ task :default do
 	Dir.chdir("kernel") do
 		ruby "-S", "rake"
 	end
-	sh "imdisk -a -m r: -f hd.img"
-	cp("stage2/bin/stage2.bin", "r:")
-	cp("kernel/bin/kernel.exe", "r:")
-	cp("kernel/bin/kernel.bin", "r:")
-	sh "imdisk -d -m r:"
+	sh "imdisk -a -m x: -f hd.img"
+	cp("stage2/bin/stage2.bin", "x:")
+	#cp("kernel/bin/kernel.exe", "r:")
+	cp("kernel/bin/kernel.bin", "x:")
+	sh "imdisk -d -m x:"
 	puts ""
 	puts "Success"
 end
