@@ -18,6 +18,7 @@ void default_isr_irq_master(word id) {
 	if (id == IRQ_BASE + IRQ_SPURIOUS_MASTER) {
 		if (pic_isr(PIC_MASTER) & IRQ_SPURIOUS_MASTER) {
 			//legit
+			printfln("*** legit spurious master irq!");
 		} else {
 			//spurious
 			printfln("*** spurious master irq!");
@@ -39,9 +40,10 @@ void default_isr_irq_master(word id) {
 void default_isr_irq_slave(word id) {
 
 	//check if IRQ is spurious
-	if (id == IRQ_BASE + IRQ_SPURIOUS_MASTER) {
+	if (id == IRQ_BASE + IRQ_SPURIOUS_SLAVE) {
 		if (pic_isr(PIC_SLAVE) & (IRQ_SPURIOUS_SLAVE >> 8)) {
 			//legit
+			printfln("*** legit spurious slave irq!");
 		} else {
 			//spurious
 			printfln("*** spurious slave irq!");
