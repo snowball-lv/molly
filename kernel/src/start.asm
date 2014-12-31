@@ -15,6 +15,9 @@ start:
 	mov esp, eax
 	mov ebp, esp
 	
+	;enable FPU
+	FNINIT
+	
 	push edx
 	call _kernel_main
 	
@@ -22,3 +25,18 @@ start:
 	.loop:
 	hlt
 	jmp .loop
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

@@ -6,6 +6,8 @@ void copy(void *src, void *dst, uword num);
 
 void memset(void *ptr, byte value, uword num);
 
+void sleep(uword millis);
+
 typedef ubyte *va_list;
 	
 #define	STACK_SIZE(type) \

@@ -11,3 +11,11 @@ void memset(void *ptr, byte value, uword num) {
 	for (uword i = 0; i < num; i++)
 		((byte *)ptr)[i] = value;
 }
+
+void sleep(uword millis) {
+	clock_t now = clock();
+	float secs = (float)millis/1000.f;
+	clock_t target = now + secs * CLOCKS_PER_SEC;
+	while (clock() < target)
+		__asm__("hlt");
+}

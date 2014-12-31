@@ -89,6 +89,44 @@ void initVMM() {
 	vmm_enable_paging();
 }
 
+static void vmm_alloc_page(PTEntry *p) {
+	void *b = pmm_alloc_block();
+	*p |= 0b1;			//present
+	*p |= 0b10;			//read/write
+	*p |= (addr_t)b;	//address
+}
+
+static void vmm_free_page(PTEntry *p) {
+	void *addr = (void *)(*p & 0xfffff000);
+	pmm_free_block(addr);
+	*p = 0;
+}
+
+typedef struct MemBlock {
+	size_t size;
+	struct MemBlock *next;
+} MemBlock;
+
+static MemBlock _root;
+
+void *kalloc(size_t size) {
+
+	MemBlock *b = &_root;
+	while (b) {
+		if (b->size >= size) {
+		
+			
+		
+		}
+		b = b->next;
+	}
+
+	return 0;
+}
+
+
+
+
 
 
 

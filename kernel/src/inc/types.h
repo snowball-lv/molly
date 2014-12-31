@@ -15,7 +15,9 @@ typedef s8 		byte;
 typedef u8 		ubyte;
 typedef u32 	uword;
 
-typedef byte *string;
+typedef uword 	size_t;
+typedef uword 	addr_t;
+typedef byte 	*string;
 
 #define null	0
 
