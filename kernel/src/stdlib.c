@@ -7,8 +7,8 @@ void copy(void *src, void *dst, uword num) {
 		((byte *)dst)[i] = ((byte *)src)[i];
 }
 
-void memset(void *ptr, byte value, uword num) {
-	for (uword i = 0; i < num; i++)
+void memset(void *ptr, byte value, size_t num) {
+	for (size_t i = 0; i < num; i++)
 		((byte *)ptr)[i] = value;
 }
 

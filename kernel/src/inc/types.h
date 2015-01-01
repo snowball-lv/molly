@@ -21,10 +21,6 @@ typedef byte 	*string;
 
 #define null	0
 
-typedef byte bool;
-#define true	1
-#define false	0
-
 
 
 

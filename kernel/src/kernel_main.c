@@ -72,29 +72,17 @@ word kernel_main(MemMap *mm) {
 		printfln(" %d", e->base + e->size);
 	}
 	
-	u64 max_mem = 0;
-	for (uword i = 0; i < mm->size; i++) {
-		MemMapEntry *e = &mm->entries[i];
-		if (e->type == MMAP_AVAILABLE) {
-			u64 max = e->base + e->size;
-			if (max_mem == 0 || max > max_mem)
-				max_mem = max;
-		}
-	}
+	initPMM();
 	
-	initPMM(max_mem / 1024, (byte *)&_kernel_end);
-	
-	for (uword i = 0; i < mm->size; i++) {
+	for (size_t i = 0; i < mm->size; i++) {
 		MemMapEntry *e = &mm->entries[i];
 		if (e->type == MMAP_AVAILABLE)
 			pmm_free_region(e->base, e->size);
 	}
 	
-	uword end = (uword)&_kernel_end;
+	addr_t end = (addr_t)&_kernel_end;
 	//alloc kernel
 	pmm_alloc_region(0x100000, end - 0x100000);
-	//alloc memory bitmap
-	pmm_alloc_region(end, pmm_size());
 	//alloc stack
 	pmm_alloc_region(0, 0x7ffff);
 	

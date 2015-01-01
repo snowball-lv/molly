@@ -4,7 +4,7 @@
 
 void copy(void *src, void *dst, uword num);
 
-void memset(void *ptr, byte value, uword num);
+void memset(void *ptr, byte value, size_t num);
 
 void sleep(uword millis);
 
