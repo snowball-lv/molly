@@ -99,6 +99,11 @@ int stage2(u8 drive) {
 	printU32(cluster);
 	println("");
 	
+	u32 fileSize = *(u32 *)&dir[28];
+	print("file size: ");
+	printU32(fileSize);
+	println("");
+	
 	u8 *kernel = (u8 *)0x100000;
 	u32 count = 0;
 	
@@ -115,7 +120,12 @@ int stage2(u8 drive) {
 	
 		u32 off = (cluster * 2) / 512;
 		read(drive, reserved + off, buffer);
-		u16 next = *(u16 *)&buffer[cluster * 2];
+		u16 next = *(u16 *)&buffer[(cluster * 2) % 512];
+		
+		//printU32(count);
+		//print(". ");
+		//printHex(next);
+		//println("");
 		
 		if (next >= 0xfff8)
 			break;
