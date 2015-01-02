@@ -24,3 +24,27 @@ typedef ubyte *va_list;
 #define va_end(ap)
 
 #define NAME(m) #m
+
+#define ASSERT_ALIGN(addr, name) 				\
+	if ((addr_t)addr % 4096) {					\
+		printfln(name " is not 4k aligned!");	\
+		__asm__("hlt");							\
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

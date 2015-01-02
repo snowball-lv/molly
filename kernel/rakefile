@@ -14,9 +14,10 @@ file "bin/kernel.bin" => "bin/kernel.exe" do
 		sh "objcopy -O binary " \
 			"-j .start " \
 			"-j .text " \
-			"-j .data " \
 			"-j .rdata " \
+			"-j .data " \
 			"-j .bss " \
+			"--set-section-flags .bss=alloc,load,contents " \
 			"kernel.exe kernel.bin"
 	end
 end

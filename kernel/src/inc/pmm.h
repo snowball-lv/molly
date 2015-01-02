@@ -2,6 +2,8 @@
 
 #include <types.h>
 
+#define PMM_BLOCK_SIZE		4096
+
 void initPMM();
 
 void pmm_free_region(addr_t base, size_t size);

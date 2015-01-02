@@ -29,13 +29,16 @@ typedef struct {
 	uword size;
 	MemMapEntry *entries;
 } MemMap;
-
-static byte _kernel_end 
-	__attribute__((section(".end"))) = 0;
-
+	
+extern void _KERNEL_BASE;
+extern void _KERNEL_END;
+	
+static void printMemMap(MemMap *mm);
+	
 word kernel_main(MemMap *mm) {
 
 	clear();
+	
 	printfln("executing kernel...");
 	
 	initGDT();
@@ -43,8 +46,39 @@ word kernel_main(MemMap *mm) {
 	initPIC();
 	initPIT();
 	
+	//enable interrupts
 	__asm__("sti");
 	
+	printMemMap(mm);
+	
+	initPMM();
+	
+	for (size_t i = 0; i < mm->size; i++) {
+		MemMapEntry *e = &mm->entries[i];
+		if (e->type == MMAP_AVAILABLE) {
+		
+			ASSERT_ALIGN(e->base, "mm entry base");
+			ASSERT_ALIGN(e->size, "mm entry size");
+			
+			pmm_free_region(e->base, e->size);
+		}
+	}
+	
+	ASSERT_ALIGN(&_KERNEL_END, "kernel end");
+	
+	//alloc 1M + kernel (esp at 0x7ffff)
+	pmm_alloc_region(0, (addr_t)&_KERNEL_END);
+	
+	initVMM();
+	initKBD();
+	
+	printfln("kernel exited");
+	return 0xbabecafe;
+}
+
+
+static void printMemMap(MemMap *mm) {
+
 	printfln("memory entries: %d", mm->size);
 	for (uword i = 0; i < mm->size; i++) {
 		MemMapEntry *e = &mm->entries[i];
@@ -72,28 +106,7 @@ word kernel_main(MemMap *mm) {
 		printfln(" %d", e->base + e->size);
 	}
 	
-	initPMM();
-	
-	for (size_t i = 0; i < mm->size; i++) {
-		MemMapEntry *e = &mm->entries[i];
-		if (e->type == MMAP_AVAILABLE)
-			pmm_free_region(e->base, e->size);
-	}
-	
-	addr_t end = (addr_t)&_kernel_end;
-	//alloc kernel
-	pmm_alloc_region(0x100000, end - 0x100000);
-	//alloc stack
-	pmm_alloc_region(0, 0x7ffff);
-	
-	initVMM();
-	initKBD();
-	
-	printfln("kernel exited");
-	return 0xbabecafe;
 }
-
-
 
 
 

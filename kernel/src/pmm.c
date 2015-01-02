@@ -33,11 +33,10 @@ void initPMM() {
 
 void pmm_free_region(addr_t base, size_t size) {
 	
-	size_t block = base / BLOCK_SIZE;
+	ASSERT_ALIGN(base, "pmm free base");
+	ASSERT_ALIGN(size, "pmm free size");
 	
-	//skip first unaligned block
-	if (base % BLOCK_SIZE)
-		block++;
+	size_t block = base / BLOCK_SIZE;
 	
 	printf("freed blocks from %d ", block);
 	
@@ -54,9 +53,12 @@ void pmm_free_region(addr_t base, size_t size) {
 
 void pmm_alloc_region(addr_t base, size_t size) {
 
+	ASSERT_ALIGN(base, "pmm alloc base");
+	ASSERT_ALIGN(size, "pmm alloc size");
+
 	size_t block = base / BLOCK_SIZE;
 		
-	size_t count = (size + (BLOCK_SIZE - 1)) / BLOCK_SIZE;
+	size_t count = size / BLOCK_SIZE;
 	
 	printf("allocated blocks from %d ", block);
 	
