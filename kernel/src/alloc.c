@@ -8,23 +8,26 @@ extern void _HEAP_START;
 
 static addr_t _program_break = (addr_t)&_HEAP_START;
 
+static void alloc_region(addr_t from, addr_t to) {
+	size_t first = PAGE_INDEX(from);
+	size_t last = PAGE_INDEX(to);
+	
+}
+
+static void free_region(addr_t from, addr_t to) {
+
+}
+
 static void *sbrk(word increment) {
-	addr_t tmp = _program_break;
+	addr_t old = _program_break;
 	addr_t new_break = _program_break + increment;
 	
-	if (increment > 0) {
-		//alloc
+	if (increment > 0)
+		alloc_region(old, new_break);
+	else if (increment < 0)
+		free_region(new_break, old);
 	
-		PDirectory *dir = vmm_get_dir();
-	
-		size_t i = _program_break;
-		for (; i < new_break; i += PMM_BLOCK_SIZE) {
-			
-			PDEntry *de = &dir->entries[PD_INDEX(i)];
-		}
-	}
-	
-	return (void *)tmp;
+	return (void *)old;
 }
 
 

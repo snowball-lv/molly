@@ -13,7 +13,7 @@
 #define ENTRY(block)		(block / BLOCKS_PER_ENTRY)
 #define POS(block)			(block & BLOCKS_PER_ENTRY)
 
-static word _mem_map[MAP_SIZE];
+static word 	_mem_map[MAP_SIZE];
 
 static void pmm_set(size_t block) {
 	_mem_map[ENTRY(block)] |= (1 << POS(block));
@@ -89,6 +89,17 @@ void pmm_free_block(void *ptr) {
 	size_t block = (addr_t)ptr / BLOCK_SIZE;
 	pmm_unset(block);
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
