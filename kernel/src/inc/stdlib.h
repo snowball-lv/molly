@@ -10,8 +10,6 @@ void sleep(uword millis);
 
 void halt();
 
-uword abs(word value);
-
 typedef ubyte *va_list;
 	
 #define	STACK_SIZE(type) \

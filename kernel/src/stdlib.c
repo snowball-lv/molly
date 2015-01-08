@@ -25,10 +25,6 @@ void halt() {
 	__asm__("hlt");
 }
 
-uword abs(word value) {
-	return (value >= 0) ? value : -value;
-}
-
 
 
 

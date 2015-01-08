@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <isr.h>
 
-#define PAGE_INDEX(addr) 	((addr) / PAGE_SIZE)
-
 typedef u32 PTEntry;
 
 typedef struct {
@@ -18,11 +16,6 @@ typedef u32 PDEntry;
 typedef struct {
 	PDEntry entries[1024];
 } PDirectory;
-
-static PDirectory 	*_kernel_pd;
-
-#define PT_INDEX(x)	(((x) >> 12) & 0x3ff)
-#define PD_INDEX(x)	(((x) >> 22) & 0x3ff)
 
 //vmm_asm.asm
 void vmm_load_PDBR(PDirectory *pd);
@@ -37,69 +30,52 @@ static void pf_isr(word id, u32 error) {
 #define PRESENT				0b01
 #define READ_WRITE			0b10
 
-#define PTABLE_ADDR(pde)		((pde) & PAGE_MASK)
-#define PAGE_ADDR(pte)			((pte) & PAGE_MASK)
+#define PT_INDEX(x)	(((x) >> 12) & 0x3ff)
+#define PD_INDEX(x)	(((x) >> 22) & 0x3ff)
 
 static PTEntry *get_pte(PTable *pt, addr_t addr) {
 	return &pt->entries[PT_INDEX(addr)];
 }
 
-static PTable *get_pt(PDEntry *pde) {
-	return (PTable *)PTABLE_ADDR(*pde);
-}
-
-static PDEntry *get_pde(addr_t addr) {
-	return &_kernel_pd->entries[PD_INDEX(addr)];
-}
-
-static void map_ptable(PDEntry *pde) {
-	PTable *pt = pmm_alloc_block();
-	*pde |= PRESENT;
-	*pde |= READ_WRITE;
-	*pde |= (addr_t)pt;
-}
-
-static void map_page(PTEntry *pte) {
-	void *page = pmm_alloc_block();
-	*pte |= PRESENT;
-	*pte |= READ_WRITE;
-	*pte |= (addr_t)page;
+static PDEntry *get_pde(PDirectory *pd, addr_t addr) {
+	return &pd->entries[PD_INDEX(addr)];
 }
 
 static void map_pages(size_t first, size_t count) {
 
 	printfln("mapping: [%d, %d)", first, first + count);
 	
+	PDirectory *pd = (PDirectory *)0xfffff000;
+	
 	for (size_t i = first; i < first + count; i++) {
 	
 		addr_t addr = i * PAGE_SIZE;
-		PDEntry *pde = get_pde(addr);
+		PDEntry *pde = get_pde(pd, addr);
 		
 		if (*pde == 0) {
 			printfln("mapping ptable!");
-			map_ptable(pde);
+			*pde |= PRESENT;
+			*pde |= READ_WRITE;
+			*pde |= (addr_t)pmm_alloc_block();
 		}
 		
-		PTable *pt = get_pt(pde);
+		PTable *pt = (PTable *)
+			((byte *)0xffc00000 + 4096 * PD_INDEX(addr));
+			
 		PTEntry *pte = get_pte(pt, addr);
 		
 		if (*pte == 0) {
 			printfln("mapping page!");
-			map_page(pte);
-			printfln("page mapped!");
+			*pte |= PRESENT;
+			*pte |= READ_WRITE;
+			*pte |= (addr_t)pmm_alloc_block();
 		}
 	}
 }
 
-static void unmap_page(PTEntry *pte) {
-	void *page = (void *)PAGE_ADDR(*pte);
-	pmm_free_block(page);
-	*pte = 0;
-}
-
 static word pt_is_empty(PTable *pt) {
 	for (size_t i = 0; i < 1024; i++)
-		if (pt->entries[i])
+		if (pt->entries[i] != 0)
 			return 0;
 	return 1;
 }
@@ -108,30 +84,38 @@ static void unmap_pages(size_t first, size_t count) {
 
 	printfln("unmapping: [%d, %d)", first, first + count);
 	
+	PDirectory *pd = (PDirectory *)0xfffff000;
+	
+	//delete empty pages
 	for (size_t i = first; i < first + count; i++) {
 	
 		addr_t addr = i * PAGE_SIZE;
-		PDEntry *pde = get_pde(addr);
+		PDEntry *pde = get_pde(pd, addr);
 		
-		if (!*pde)
+		if (*pde == 0)
 			continue;
 		
-		PTable *pt = get_pt(pde);
+		PTable *pt = (PTable *)
+			((byte *)0xffc00000 + 4096 * PD_INDEX(addr));
+			
 		PTEntry *pte = get_pte(pt, addr);
 		
-		if (*pte)
-			unmap_page(pte);
+		if (*pte != 0) {
+			pmm_free_block((void *)(*pte & PAGE_MASK));
+			*pte = 0;
+		}
 	}
 	
 	//delete empty page tables
 	for (size_t i = 0; i < 1024; i++) {
 	
-		PDEntry *pde = &_kernel_pd->entries[i];
+		PDEntry *pde = &pd->entries[i];
 		
-		if (!*pde)
+		if (*pde == 0)
 			continue;
 			
-		PTable *pt = (PTable *)PTABLE_ADDR(*pde);
+		PTable *pt = (PTable *)
+			((byte *)0xffc00000 + 4096 * i);
 		
 		if (pt_is_empty(pt)) {
 			pmm_free_block(pt);
@@ -144,9 +128,10 @@ extern none_t 		_KERNEL_END;
 static addr_t 		_kernel_break;
 static addr_t 		_heap_start;
 
-#define ALIGN(v, a)	((((v) + (a) - 1) / (a)) * (a))
-
-#define PAGE_ALIGN(addr)	ALIGN(addr, PAGE_SIZE)
+#define ALIGN(v, a)			((((v) + (a) - 1) / (a)) * (a))
+#define PAGE_ALIGN(addr)	(ALIGN((addr), PAGE_SIZE))
+#define PAGE_INDEX(addr) 	((addr) / PAGE_SIZE)
+#define ABS(value)			(((value) >= 0)? (value) : -(value))
 
 static void *sbrk(word increment) {
 	
@@ -158,18 +143,20 @@ static void *sbrk(word increment) {
 	if (increment > 0) {
 	
 		size_t first = PAGE_INDEX(old_break);
-		addr_t rem = old_break % PAGE_SIZE;
-		size_t count = PAGE_ALIGN(rem + increment) / PAGE_SIZE;
-		map_pages(first, count);
+		size_t piob = PAGE_INDEX(PAGE_ALIGN(old_break));
+		size_t pinb = PAGE_INDEX(PAGE_ALIGN(new_break));
+		size_t count = pinb - piob;
+		if (count > 0)
+			map_pages(first, count);
 		
 	} else if (increment < 0) {
 	
 		size_t first = PAGE_INDEX(PAGE_ALIGN(new_break));
-		addr_t rem = new_break % PAGE_SIZE;
-		rem = PAGE_SIZE - rem;
-		increment = abs(increment) - rem;
-		size_t count = PAGE_ALIGN(increment) / PAGE_SIZE;
-		unmap_pages(first, count);
+		size_t piob = PAGE_INDEX(old_break);
+		size_t pinb = PAGE_INDEX(new_break);
+		size_t count = piob - pinb;
+		if (count > 0)
+			unmap_pages(first, count);
 		
 	}
 	
@@ -188,10 +175,14 @@ void initVMM() {
 	printfln("kernel end %d", _kernel_break);
 	
 	//set 1 block after kernel for pdirectory
-	pmm_set_blocks(PAGE_INDEX(_kernel_break), 1);
-	_kernel_pd = (PDirectory *)_kernel_break;
-	_kernel_break += PAGE_SIZE;
-	memset(_kernel_pd, 0, sizeof(PDirectory));
+	PDirectory *pd = (PDirectory *)pmm_alloc_block();
+	memset(pd, 0, sizeof(PDirectory));
+	
+	//recursive map last pde
+	PDEntry *last = &pd->entries[1023];
+	*last |= PRESENT;
+	*last |= READ_WRITE;
+	*last |= (addr_t)pd;
 	
 	//page count to identity map
 	size_t count = _kernel_break / PAGE_SIZE;
@@ -201,25 +192,18 @@ void initVMM() {
 	for (size_t i = 0; i < count; i++) {
 		addr_t addr = i * PAGE_SIZE;
 		
-		PDEntry *pde = get_pde(addr);
+		PDEntry *pde = get_pde(pd, addr);
 		
-		if (!*pde) {
-			printfln("identity mapping ptable!");
-			
-			//set 1 block after kernel for ptable
-			pmm_set_blocks(PAGE_INDEX(_kernel_break), 1);
-			PTable *pt = (PTable *)_kernel_break;
-			_kernel_break += PAGE_SIZE;
-			count++;
+		if (*pde == 0) {
+			printfln("mapping ptable!");
+			PTable *pt = (PTable *)pmm_alloc_block();
 			memset(pt, 0, sizeof(PTable));
-			
 			*pde |= PRESENT;
 			*pde |= READ_WRITE;
 			*pde |= (addr_t)pt;
 		}
 			
-		PTable *pt = get_pt(pde);
-		
+		PTable *pt = (PTable *)(*pde & PAGE_MASK);
 		PTEntry *pte = get_pte(pt, addr);
 		
 		*pte |= PRESENT;
@@ -230,7 +214,7 @@ void initVMM() {
 	//set PF isr
 	set_isr(14, pf_isr);
 	
-	vmm_load_PDBR(_kernel_pd);
+	vmm_load_PDBR(pd);
 	vmm_enable_paging();
 	
 	_heap_start = _kernel_break;
