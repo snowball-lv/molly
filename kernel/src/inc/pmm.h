@@ -2,13 +2,14 @@
 
 #include <types.h>
 
-#define PMM_BLOCK_SIZE		4096
-
 void initPMM();
 
-void pmm_free_region(addr_t base, size_t size);
-void pmm_alloc_region(addr_t base, size_t size);
+void pmm_unset_blocks(size_t first, size_t count);
+
+void pmm_set_blocks(size_t first, size_t count);
+
 void *pmm_alloc_block();
+
 void pmm_free_block(void *ptr);
 
 

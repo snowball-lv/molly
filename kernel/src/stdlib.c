@@ -19,3 +19,30 @@ void sleep(uword millis) {
 	while (clock() < target)
 		__asm__("hlt");
 }
+
+void halt() {
+	__asm__("cli");
+	__asm__("hlt");
+}
+
+uword abs(word value) {
+	return (value >= 0) ? value : -value;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

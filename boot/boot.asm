@@ -84,7 +84,10 @@ readDisk: ;void ()
 	jmp .end
 	
 	.error:
-		push err
+		push err1
+		call println
+		add [err0], byte ah
+		push err0
 		call println
 		cli
 		hlt
@@ -95,7 +98,8 @@ readDisk: ;void ()
 	ret
 
 ok 		db "ok", 0
-err 	db "error", 0
+err0 	db "0", 0	;int13 error
+err1 	db "1", 0	;read disk error
 
 ;disk address packet structure
 align 4
@@ -155,6 +159,7 @@ start:
 	mov dl, [BOOT_DRIVE]
 	int 0x13
 	;check for error
+	mov eax, err0
 	jc .error
 	
 	;read root
@@ -257,7 +262,7 @@ start:
 	
 	.error:
 	
-	push err
+	push eax
 	call println
 	cli
 	hlt

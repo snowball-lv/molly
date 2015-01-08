@@ -21,6 +21,7 @@ typedef byte 	*string;
 
 #define null	0
 
+typedef struct none_t {} none_t;
 
 
 

@@ -30,12 +30,24 @@ typedef struct {
 	MemMapEntry *entries;
 } MemMap;
 	
-extern void _KERNEL_BASE;
-extern void _KERNEL_END;
+extern none_t _KERNEL_BASE;
+extern none_t _BSS_START;
+extern none_t _BSS_END;
+extern none_t _KERNEL_END;
 	
 static void printMemMap(MemMap *mm);
 	
+static void intiBSS() {
+	addr_t start 	= (addr_t)&_BSS_START;
+	addr_t end 		= (addr_t)&_BSS_END;
+	memset((void *)start, 0, end - start);
+}
+	
 word kernel_main(MemMap *mm) {
+
+	intiBSS();
+	
+	ASSERT_ALIGN(&_KERNEL_END, "kernel end");
 
 	clear();
 	
@@ -60,17 +72,30 @@ word kernel_main(MemMap *mm) {
 			ASSERT_ALIGN(e->base, "mm entry base");
 			ASSERT_ALIGN(e->size, "mm entry size");
 			
-			pmm_free_region(e->base, e->size);
+			size_t first = e->base / PAGE_SIZE;
+			size_t count = e->size / PAGE_SIZE;
+			
+			pmm_unset_blocks(first, count);
 		}
 	}
 	
-	ASSERT_ALIGN(&_KERNEL_END, "kernel end");
-	
 	//alloc 1M + kernel (esp at 0x7ffff)
-	pmm_alloc_region(0, (addr_t)&_KERNEL_END);
+	pmm_set_blocks(0, (addr_t)&_KERNEL_END / PAGE_SIZE);
 	
 	initVMM();
-	initKBD();
+	//initKBD();
+	
+	word *w1 = kalloc(sizeof(word));
+	*w1 = 1337;
+	
+	word *w2 = kalloc(sizeof(word));
+	*w2 = 7331;
+	
+	kfree(w2);
+	kfree(w1);
+	
+	//printfln("dynamic word 1: %d", *w1);
+	//printfln("dynamic word 2: %d", *w2);
 	
 	printfln("kernel exited");
 	return 0xbabecafe;

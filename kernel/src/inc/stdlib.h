@@ -8,6 +8,10 @@ void memset(void *ptr, byte value, size_t num);
 
 void sleep(uword millis);
 
+void halt();
+
+uword abs(word value);
+
 typedef ubyte *va_list;
 	
 #define	STACK_SIZE(type) \
@@ -26,9 +30,9 @@ typedef ubyte *va_list;
 #define NAME(m) #m
 
 #define ASSERT_ALIGN(addr, name) 				\
-	if ((addr_t)addr % 4096) {					\
+	if ((addr_t)(addr) % 4096) {					\
 		printfln(name " is not 4k aligned!");	\
-		__asm__("hlt");							\
+		halt();						\
 	}
 
 

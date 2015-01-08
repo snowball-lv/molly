@@ -10,8 +10,8 @@
 #define MAP_BYTES			(MAP_SIZE * sizeof(word))
 #define BLOCKS				(MAP_SIZE * BLOCKS_PER_ENTRY)
 
-#define ENTRY(block)		(block / BLOCKS_PER_ENTRY)
-#define POS(block)			(block & BLOCKS_PER_ENTRY)
+#define ENTRY(block)		((block)/ BLOCKS_PER_ENTRY)
+#define POS(block)			((block) & BLOCKS_PER_ENTRY)
 
 static word 	_mem_map[MAP_SIZE];
 
@@ -31,43 +31,22 @@ void initPMM() {
 	memset(_mem_map, 0xff, MAP_BYTES);
 }
 
-void pmm_free_region(addr_t base, size_t size) {
+void pmm_unset_blocks(size_t first, size_t count) {
 	
-	ASSERT_ALIGN(base, "pmm free base");
-	ASSERT_ALIGN(size, "pmm free size");
+	printfln("unsetting blocks: [%d, %d)", first, first + count);
 	
-	size_t block = base / BLOCK_SIZE;
-	
-	printf("freed blocks from %d ", block);
-	
-	size_t count = size / BLOCK_SIZE;
-	while (count) {
-		pmm_unset(block++);
-		count--;
-	}
-	
-	printfln("to %d ", block);
+	for (size_t i = first; i < first + count; i++)
+		pmm_unset(i);
 	
 	pmm_set(0);
 }
 
-void pmm_alloc_region(addr_t base, size_t size) {
+void pmm_set_blocks(size_t first, size_t count) {
 
-	ASSERT_ALIGN(base, "pmm alloc base");
-	ASSERT_ALIGN(size, "pmm alloc size");
+	printfln("setting blocks: [%d, %d)", first, first + count);
 
-	size_t block = base / BLOCK_SIZE;
-		
-	size_t count = size / BLOCK_SIZE;
-	
-	printf("allocated blocks from %d ", block);
-	
-	while (count) {
-		pmm_set(block++);
-		count--;
-	}
-	
-	printfln("to %d ", block);
+	for (size_t i = first; i < first + count; i++)
+		pmm_set(i);
 }
 
 void *pmm_alloc_block() {
@@ -75,6 +54,7 @@ void *pmm_alloc_block() {
 	for (size_t i = 0; i < BLOCKS; i++) {
 		if (!pmm_test(i)) {
 			pmm_set(i);
+			printfln("alloc block: %d", i);
 			return (void *)(i * BLOCK_SIZE);
 		}
 	}
@@ -87,6 +67,7 @@ void *pmm_alloc_block() {
 
 void pmm_free_block(void *ptr) {
 	size_t block = (addr_t)ptr / BLOCK_SIZE;
+	printfln("free block: %d", block);
 	pmm_unset(block);
 }
 

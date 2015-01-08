@@ -2,23 +2,12 @@
 
 #include<types.h>
 
+#define PAGE_SIZE			4096
+
 void initVMM();
 
-typedef u32 PTEntry;
-
-typedef struct {
-	PTEntry entries[1024];
-} PTable;
-
-typedef u32 PDEntry;
-
-typedef struct {
-	PDEntry entries[1024];
-} PDirectory;
-
-
-
-
+void *kalloc(size_t size);
+void kfree(void *ptr);
 
 
 

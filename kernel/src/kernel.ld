@@ -16,13 +16,16 @@ SECTIONS
 	.data : ALIGN(0x1000) {
 		*(.data)
 	}
-	.bss : ALIGN(0x1000) { 					
+	
+	.bss : ALIGN(0x1000) { 	
+		__BSS_START = .;				
 		*(.bss)
 	}
 	
 	. = ALIGN(0x1000);
-	__KERNEL_END = .;
-	__HEAP_START = .;
+	__BSS_END 		= .;
+	__KERNEL_END 	= .;
+	__HEAP_START 	= .;
 	
 	/DISCARD/ : {
 		*(.eh_frame)

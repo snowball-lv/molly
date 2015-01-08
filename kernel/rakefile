@@ -17,7 +17,6 @@ file "bin/kernel.bin" => "bin/kernel.exe" do
 			"-j .rdata " \
 			"-j .data " \
 			"-j .bss " \
-			"--set-section-flags .bss=alloc,load,contents " \
 			"kernel.exe kernel.bin"
 	end
 end
