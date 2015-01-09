@@ -142,21 +142,17 @@ static void *sbrk(word increment) {
 	
 	if (increment > 0) {
 	
-		size_t first = PAGE_INDEX(old_break);
-		size_t piob = PAGE_INDEX(PAGE_ALIGN(old_break));
-		size_t pinb = PAGE_INDEX(PAGE_ALIGN(new_break));
-		size_t count = pinb - piob;
-		if (count > 0)
-			map_pages(first, count);
+		size_t first = PAGE_INDEX(PAGE_ALIGN(old_break));
+		size_t last = PAGE_INDEX(PAGE_ALIGN(new_break));
+		size_t count = last - first;
+		map_pages(first, count);
 		
 	} else if (increment < 0) {
 	
 		size_t first = PAGE_INDEX(PAGE_ALIGN(new_break));
-		size_t piob = PAGE_INDEX(old_break);
-		size_t pinb = PAGE_INDEX(new_break);
-		size_t count = piob - pinb;
-		if (count > 0)
-			unmap_pages(first, count);
+		size_t last = PAGE_INDEX(PAGE_ALIGN(old_break));
+		size_t count = last - first;
+		unmap_pages(first, count);
 		
 	}
 	

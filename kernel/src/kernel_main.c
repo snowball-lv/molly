@@ -85,15 +85,6 @@ word kernel_main(MemMap *mm) {
 	initVMM();
 	//initKBD();
 	
-	word *w1 = kalloc(sizeof(word));
-	*w1 = 1337;
-	
-	word *w2 = kalloc(sizeof(word));
-	*w2 = 7331;
-	
-	kfree(w2);
-	kfree(w1);
-	
 	//printfln("dynamic word 1: %d", *w1);
 	//printfln("dynamic word 2: %d", *w2);
 	
