@@ -27,14 +27,18 @@ typedef ubyte *va_list;
 
 #define NAME(m) #m
 
-#define ASSERT_ALIGN(addr, name) 				\
-	if ((addr_t)(addr) % 4096) {					\
-		printfln(name " is not 4k aligned!");	\
-		halt();						\
+#define ASSERT(ex, msg) 	\
+	if (!(ex)) {			\
+		printfln(msg);		\
+		halt();				\
 	}
 
-
-
+#define ASSERT_ALIGN(addr, msg) 		\
+	ASSERT(								\
+		((addr_t)(addr) % 4096) == 0,	\
+		msg " is not 4k aligned!")
+		
+		
 
 
 

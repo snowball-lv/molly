@@ -37,18 +37,21 @@ extern none_t _KERNEL_END;
 	
 static void printMemMap(MemMap *mm);
 	
-static void intiBSS() {
+static void initBSS() {
 	addr_t start 	= (addr_t)&_BSS_START;
-	addr_t end 		= (addr_t)&_BSS_END;
+	addr_t end		= (addr_t)&_BSS_END;
 	memset((void *)start, 0, end - start);
 }
 	
 word kernel_main(MemMap *mm) {
 
-	intiBSS();
+	//zero init bss
+	initBSS();
 	
+	//assert the kernel size is 4k aligned
 	ASSERT_ALIGN(&_KERNEL_END, "kernel end");
 
+	//clear the screen
 	clear();
 	
 	printfln("executing kernel...");
@@ -69,6 +72,7 @@ word kernel_main(MemMap *mm) {
 		MemMapEntry *e = &mm->entries[i];
 		if (e->type == MMAP_AVAILABLE) {
 		
+			//assert the memory regions are 4k aligned
 			ASSERT_ALIGN(e->base, "mm entry base");
 			ASSERT_ALIGN(e->size, "mm entry size");
 			
@@ -83,7 +87,7 @@ word kernel_main(MemMap *mm) {
 	pmm_set_blocks(0, (addr_t)&_KERNEL_END / PAGE_SIZE);
 	
 	initVMM();
-	//initKBD();
+	initKBD();
 	
 	//printfln("dynamic word 1: %d", *w1);
 	//printfln("dynamic word 2: %d", *w2);

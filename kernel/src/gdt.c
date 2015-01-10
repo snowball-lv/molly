@@ -28,9 +28,9 @@ static GDTDesc 	_gdt[MAX_DESCRIPTORS];
 void lgdt(GDTR *gdtr);
 
 void initGDT() {
-	printfln("MAX_DESCRIPTORS: %d", MAX_DESCRIPTORS);
-	printfln("sizeof(GDTR): %d", sizeof(GDTR));
-	printfln("sizeof(GDTDesc): %d", sizeof(GDTDesc));
+	
+	ASSERT(sizeof(GDTR) == 6, "bad GDTR alignment!");
+	ASSERT(sizeof(GDTDesc) == 8, "bad GDTDesc alignment!");
 	
 	//null descriptor
 	memset((byte *)&_gdt[0], 0, sizeof(GDTDesc));

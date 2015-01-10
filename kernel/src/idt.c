@@ -3,6 +3,7 @@
 #include <types.h>
 #include <gdt.h>
 #include <isr.h>
+#include <stdlib.h>
 
 #define ATTR __attribute__((packed))
 
@@ -34,10 +35,9 @@ static void set_gate(word id, u32 isr) {
 }
 
 void initIDT() {
-
-	printfln("MAX_INTERRUPTS: %d", MAX_INTERRUPTS);
-	printfln("sizeof(IDTR): %d", sizeof(IDTR));
-	printfln("sizeof(IDTDesc): %d", sizeof(IDTDesc));
+	
+	ASSERT(sizeof(IDTR) == 6, "bad IDTR alignment!");
+	ASSERT(sizeof(IDTDesc) == 8, "bad IDTDesc alignment!");
 	
 	for (word i = 0; i < MAX_INTERRUPTS; i++)
 		set_gate(i, (u32)_ISR_WRAPPERS[i]);

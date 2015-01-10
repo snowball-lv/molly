@@ -161,16 +161,15 @@ static void *sbrk(word increment) {
 }
 
 void initVMM() {
-
-	//validate struct alignment
-	printfln("sizeof(PTEntry): %d", sizeof(PTEntry));
-	printfln("sizeof(PDEntry): %d", sizeof(PDEntry));
+	
+	ASSERT(sizeof(PTEntry) == 4, "bad PTEntry alignment!");
+	ASSERT(sizeof(PDEntry) == 4, "bad PDEntry alignment!");
 
 	//end of kernel data
 	_kernel_break = (addr_t)&_KERNEL_END;
 	printfln("kernel end %d", _kernel_break);
 	
-	//set 1 block after kernel for pdirectory
+	//aloc block for kernel directory
 	PDirectory *pd = (PDirectory *)pmm_alloc_block();
 	memset(pd, 0, sizeof(PDirectory));
 	
