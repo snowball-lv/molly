@@ -8,6 +8,7 @@
 
 #define READ_ISR	0x0b 
 
+
 uint8_t pic_isr(uint8_t pic) {
 
 	uint16_t port = (pic == PIC_MASTER) ?
@@ -27,8 +28,8 @@ void init_pic() {
 
 	//send Initialization Control Word 2
 	//IRQ base address (0 - 31 are reserved)
-	out8(MASTER_DATA, 32);
-	out8(SLAVE_DATA, 40);
+	out8(MASTER_DATA, PIC_IRQ_BASE);
+	out8(SLAVE_DATA, PIC_IRQ_BASE + 8);
 	
 	//send Initialization Control Word 3
 	//cascading

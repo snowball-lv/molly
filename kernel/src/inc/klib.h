@@ -13,9 +13,15 @@ void stop();
 
 void memset(void *ptr, byte value, size_t num);
 
+#define CLOCKS_PER_SEC 100
+
+typedef uword clock_t;
+
+clock_t clock();
+
 #define ASSERT(ex, msg) 	\
 	if (!(ex)) {			\
-		printfln(msg);		\
+		kprintfln(msg);		\
 		stop();				\
 	}
 
@@ -29,7 +35,28 @@ void memset(void *ptr, byte value, size_t num);
 		sizeof(type) == (size),		\
 		#type " is wrong size!")
 		
-		
+void copy(void *src, void *dst, uword num);
+
+void sleep(uword millis);
+
+size_t strlen(const byte *str);
+
+typedef byte *va_list;
+	
+#define	STACK_SIZE(type) \
+	(((sizeof(type) + sizeof(word) - 1) / \
+	sizeof(word)) * sizeof(word))
+
+#define	va_start(ap, last) \
+	(ap = ((va_list)&last) + STACK_SIZE(last))
+
+#define va_arg(ap, type) \
+	(ap += STACK_SIZE(type), \
+	*((type *)(ap - STACK_SIZE(type))))
+
+#define va_end(ap)
+
+#define NAME(m) #m		
 		
 		
 		

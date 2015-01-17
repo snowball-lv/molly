@@ -1,7 +1,7 @@
 #include <gdt.h>
 #include <types.h>
 #include <console.h>
-#include <stdlib.h>
+#include <klib.h>
 
 #define ATTR __attribute__((packed))
 
@@ -28,8 +28,8 @@ static GDTDesc 	_gdt[MAX_DESCRIPTORS];
 //gdt_asm.asm
 void lgdt(GDTR *gdtr);
 
-#define FLAG_32_BIT		0b0100
-#define FLAG_4K_GRAN	0b1000
+#define FLAG_32_BIT			0b0100
+#define FLAG_4K_GRAN		0b1000
 
 #define ACC_PRESENT			0b10000000
 
@@ -81,36 +81,20 @@ void init_gdt() {
 	//null descriptor
 	gdt_set_gate(0, 0, 0, 0, 0);
 	
-	//code descriptor
-	uint8_t code_acc = 
-		ACC_PRESENT 		|
-		ACC_RING_0 			|
-		ACC_SIGN 			|
-		ACC_CODE 			|
-		ACC_CODE_CONF_ONLY 	|
-		ACC_CODE_READABLE;
-		
+	//flat code descriptor
 	gdt_set_gate(
 		1,
 		0,
 		0xfffff,
-		code_acc,
+		0b10011010,
 		FLAG_32_BIT | FLAG_4K_GRAN);
 	
-	//data descriptor
-	uint8_t data_acc = 
-		ACC_PRESENT 		|
-		ACC_RING_0 			|
-		ACC_SIGN 			|
-		ACC_DATA 			|
-		ACC_DATA_DIR_UP 	|
-		ACC_DATA_WRITABLE;
-		
+	//flat data descriptor
 	gdt_set_gate(
 		2,
 		0,
 		0xfffff,
-		data_acc,
+		0b10010010,
 		FLAG_32_BIT | FLAG_4K_GRAN);
 	
 	_gdtr.size = sizeof(GDTDesc) * MAX_DESCRIPTORS - 1;

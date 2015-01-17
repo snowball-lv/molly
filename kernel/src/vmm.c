@@ -2,17 +2,12 @@
 #include <types.h>
 #include <pmm.h>
 #include <console.h>
-#include <stdlib.h>
-#include <isr.h>
+#include <klib.h>
+#include <interrupt.h>
 
 //vmm_asm.asm
 void vmm_load_PDBR(PDirectory *pd);
 void vmm_enable_paging();
-
-static void pf_isr(word id, uint32_t error) {
-	printfln("*** page fault!");
-	stop();
-}
 
 #define PAGE_MASK			0xfffff000
 #define PRESENT				0b01
@@ -31,7 +26,7 @@ static PDEntry *get_pde(PDirectory *pd, addr_t addr) {
 
 static void map_pages(size_t first, size_t count) {
 
-	printfln("mapping: [%d, %d)", first, first + count);
+	kprintfln("mapping: [%d, %d)", first, first + count);
 	
 	PDirectory *pd = (PDirectory *)0xfffff000;
 	
@@ -41,7 +36,7 @@ static void map_pages(size_t first, size_t count) {
 		PDEntry *pde = get_pde(pd, addr);
 		
 		if (*pde == 0) {
-			printfln("mapping ptable!");
+			kprintfln("mapping ptable!");
 			*pde |= PRESENT;
 			*pde |= READ_WRITE;
 			*pde |= (addr_t)pmm_alloc_block();
@@ -53,7 +48,7 @@ static void map_pages(size_t first, size_t count) {
 		PTEntry *pte = get_pte(pt, addr);
 		
 		if (*pte == 0) {
-			printfln("mapping page!");
+			kprintfln("mapping page!");
 			*pte |= PRESENT;
 			*pte |= READ_WRITE;
 			*pte |= (addr_t)pmm_alloc_block();
@@ -70,7 +65,7 @@ static word pt_is_empty(PTable *pt) {
 
 static void unmap_pages(size_t first, size_t count) {
 
-	printfln("unmapping: [%d, %d)", first, first + count);
+	kprintfln("unmapping: [%d, %d)", first, first + count);
 	
 	PDirectory *pd = (PDirectory *)0xfffff000;
 	
@@ -123,7 +118,7 @@ static addr_t 		_heap_start;
 
 static void *sbrk(word increment) {
 	
-	printfln("sbrk: %d", increment);
+	kprintfln("sbrk: %d", increment);
 
 	addr_t old_break = _kernel_break;
 	addr_t new_break = _kernel_break + increment;
@@ -148,6 +143,10 @@ static void *sbrk(word increment) {
 	return (void *)old_break;
 }
 
+static void pf_isr(isr_info_t *info) {
+	kprintfln("*** page fault! %x", info->err_code);
+}
+
 void init_vmm() {
 	
 	ASSERT_SIZE(PTEntry, 4);
@@ -155,7 +154,7 @@ void init_vmm() {
 
 	//end of kernel data
 	_kernel_break = (addr_t)&_KERNEL_END;
-	printfln("kernel end %d", _kernel_break);
+	kprintfln("kernel end %d", _kernel_break);
 	
 	//aloc block for kernel directory
 	PDirectory *pd = (PDirectory *)pmm_alloc_block();
@@ -169,7 +168,7 @@ void init_vmm() {
 	
 	//page count to identity map
 	size_t count = _kernel_break / PAGE_SIZE;
-	printfln("identity: [%d, %d)", 0, count);
+	kprintfln("identity: [%d, %d)", 0, count);
 	
 	//identity map kernel pages
 	for (size_t i = 0; i < count; i++) {
@@ -178,7 +177,7 @@ void init_vmm() {
 		PDEntry *pde = get_pde(pd, addr);
 		
 		if (*pde == 0) {
-			printfln("mapping ptable!");
+			kprintfln("mapping ptable!");
 			PTable *pt = (PTable *)pmm_alloc_block();
 			memset(pt, 0, sizeof(PTable));
 			*pde |= PRESENT;
@@ -194,13 +193,13 @@ void init_vmm() {
 		*pte |= (i * PAGE_SIZE);
 	}
 	
-	//set PF isr
-	set_isr(14, pf_isr);
-	
 	vmm_load_PDBR(pd);
 	vmm_enable_paging();
 	
 	_heap_start = _kernel_break;
+	
+	//set PF isr
+	isr_add_handler(14, pf_isr);
 }
 
 //kalloc & kfree
@@ -237,11 +236,11 @@ static Header *next(Header *last) {
 
 void *kmalloc(size_t size) {
 
-	printfln("kmalloc");
-	printfln("size: %d", size);
+	kprintfln("kmalloc");
+	kprintfln("size: %d", size);
 	
 	size_t as = KALLOC_ALIGN(size);
-	printfln("as: %d", as);
+	kprintfln("as: %d", as);
 
 	Header *h = 0;
 	while ((h = next(h))) {
@@ -251,7 +250,7 @@ void *kmalloc(size_t size) {
 		
 		if (h->size == as) {
 			h->status = STATUS_ALLOCATED;
-			printfln("best fit kmalloc!");
+			kprintfln("best fit kmalloc!");
 			return h;
 		}
 		
@@ -262,12 +261,12 @@ void *kmalloc(size_t size) {
 			Header *h2 = next(h);
 			h2->size = as;
 			h2->status = STATUS_ALLOCATED;
-			printfln("split kmalloc!");
+			kprintfln("split kmalloc!");
 			return h2;
 		}
 	}
 	
-	printfln("sbrk kmalloc!");
+	kprintfln("sbrk kmalloc!");
 			
 	h = sbrk(sizeof(Header) + as);
 	h->size = as;
@@ -278,7 +277,7 @@ void *kmalloc(size_t size) {
 
 void kfree(void *ptr) {
 
-	printfln("kfree");
+	kprintfln("kfree");
 
 	Header *h = (Header *)((byte *)ptr - sizeof(Header));
 	h->status = STATUS_FREE;
@@ -290,7 +289,7 @@ void kfree(void *ptr) {
 				prev->status == STATUS_FREE &&
 				h->status == STATUS_FREE)
 		{
-			printfln("merging: %d + %d", prev->size, h->size);
+			kprintfln("merging: %d + %d", prev->size, h->size);
 			prev->size += sizeof(Header) + h->size;
 		} else {
 			prev = h;
@@ -303,7 +302,7 @@ void kfree(void *ptr) {
 		last = next(last);
 		
 	if (last->status == STATUS_FREE) {
-		printfln("releasing last free block!");
+		kprintfln("releasing last free block!");
 		sbrk(-(sizeof(Header) + last->size));
 	}
 }

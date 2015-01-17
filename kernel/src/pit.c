@@ -1,9 +1,9 @@
 #include <pit.h>
 #include <io.h>
-#include <time.h>
 #include <pic.h>
-#include <isr.h>
 #include <console.h>
+#include <klib.h>
+#include <interrupt.h>
 
 #define PIT_HZ			1193182
 #define COUNTER_0 		0x40
@@ -11,10 +11,14 @@
 #define COUNTER_2 		0x42
 #define COMMAND_WORD	0x43
 
-static clock_t _ticks;
+static clock_t _pit_ticks;
 
-void pit_isr(word id) {
-	_ticks++;
+clock_t pit_get_ticks() {
+	return _pit_ticks;
+}
+
+static void tick_isr(isr_info_t *info) {
+	_pit_ticks++;
 }
 
 void init_pit() {
@@ -31,19 +35,15 @@ void init_pit() {
 	out8(COUNTER_0, (count >> 8) & 0xff);
 	
 	//set timer isr
-	set_isr(IRQ_BASE + PIC_IRQ_TIMER, pit_isr);
+	isr_add_handler(32, tick_isr);
 	
 	//initialize ticks
-	_ticks = 0;
+	_pit_ticks = 0;
 	
 	//enable timer
 	uint8_t mask = pic_read_data(PIC_MASTER);
 	mask &= ~(1 << PIC_IRQ_TIMER);
 	pic_write_data(PIC_MASTER, mask);
-}
-
-clock_t clock() {
-	return _ticks;
 }
 
 

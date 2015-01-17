@@ -1,4 +1,3 @@
-ENTRY(_kernel_main)
 OUTPUT(bin/kernel.exe)
 SECTIONS
 {

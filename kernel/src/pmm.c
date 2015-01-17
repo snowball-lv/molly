@@ -1,7 +1,7 @@
 #include <pmm.h>
 #include <types.h>
 #include <console.h>
-#include <stdlib.h>
+#include <klib.h>
 
 #define BLOCK_SIZE 			(4096)
 #define MAX_BLOCKS			(0xffffffff / BLOCK_SIZE)
@@ -33,7 +33,7 @@ void init_pmm() {
 
 void pmm_unset_blocks(size_t first, size_t count) {
 	
-	printfln("unsetting blocks: [%d, %d)", first, first + count);
+	kprintfln("unsetting blocks: [%d, %d)", first, first + count);
 	
 	for (size_t i = first; i < first + count; i++)
 		pmm_unset(i);
@@ -43,7 +43,7 @@ void pmm_unset_blocks(size_t first, size_t count) {
 
 void pmm_set_blocks(size_t first, size_t count) {
 
-	printfln("setting blocks: [%d, %d)", first, first + count);
+	kprintfln("setting blocks: [%d, %d)", first, first + count);
 
 	for (size_t i = first; i < first + count; i++)
 		pmm_set(i);
@@ -54,12 +54,12 @@ void *pmm_alloc_block() {
 	for (size_t i = 0; i < BLOCKS; i++) {
 		if (!pmm_test(i)) {
 			pmm_set(i);
-			printfln("alloc block: %d", i);
+			kprintfln("alloc block: %d", i);
 			return (void *)(i * BLOCK_SIZE);
 		}
 	}
 	
-	printfln("*** out of free blocks!");
+	kprintfln("*** out of free blocks!");
 	__asm__("hlt");
 	
 	return 0;
@@ -67,7 +67,7 @@ void *pmm_alloc_block() {
 
 void pmm_free_block(void *ptr) {
 	size_t block = (addr_t)ptr / BLOCK_SIZE;
-	printfln("free block: %d", block);
+	kprintfln("free block: %d", block);
 	pmm_unset(block);
 }
 

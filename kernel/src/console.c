@@ -1,6 +1,6 @@
 #include <console.h>
 #include <types.h>
-#include <stdlib.h>
+#include <klib.h>
 
 #define VGA_MEM 		0xb8000
 #define WIDTH 			80
@@ -19,10 +19,6 @@ void console_clear() {
 		*(addr + i) = blank;
 	xPos = 0;
 	yPos = 0;
-}
-
-void clear() {
-	console_clear();
 }
 
 static void scroll() {
@@ -130,44 +126,6 @@ static void printBin(word value) {
 	byte *str = itoa(value, buffer, 2);
 	puts(str);
 	puts("b");
-}
-
-void printf(const byte *format, ...) {
-	va_list args;
-    va_start(args, format);
-	
-	while (*format != 0) {
-		switch (*format) {
-		case '%': 
-			switch (*(format + 1)) {
-			case 'd':
-				printDec(va_arg(args, word));
-				format += 2;
-			break;
-			case 'x':
-				printHex(va_arg(args, word));
-				format += 2;
-			break;
-			case 'b':
-				printBin(va_arg(args, word));
-				format += 2;
-			break;
-			case 'c':
-				putc(va_arg(args, byte));
-				format += 2;
-			break;
-			case 's':
-				puts(va_arg(args, byte *));
-				format += 2;
-			break;
-			default: putc(*format++); break;
-			}
-		break;
-		default: putc(*format++); break;
-		}
-	}
-	
-	va_end(args);
 }
 
 void kprintf(const byte *format, ...) {

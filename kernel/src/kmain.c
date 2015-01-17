@@ -5,6 +5,9 @@
 #include <memmap.h>
 #include <vmm.h>
 #include <gdt.h>
+#include <idt.h>
+#include <pic.h>
+#include <pit.h>
 
 static void wait_loop();
 static void zero_bss();
@@ -28,6 +31,21 @@ void kmain(MemMap *mm) {
 	
 	//set up gdt
 	init_gdt();
+	
+	//set up idt and interrupt handlers
+	init_idt();
+	
+	//init vmm and enable paging
+	init_vmm();
+	
+	//set up pic
+	init_pic();
+	
+	//set up pit
+	init_pit();
+	
+	//enable interrupts
+	__asm__("sti");
 	
 	//TODO
 	
