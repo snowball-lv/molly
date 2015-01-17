@@ -3,23 +3,24 @@
 #include <console.h>
 #include <stdlib.h>
 
-#define MAX_DESCRIPTORS 3
 #define ATTR __attribute__((packed))
 
 typedef struct {
-	u16 size;
-	u32 addr;
+	uint16_t size;
+	uint32_t addr;
 } ATTR GDTR;
 
 typedef struct {
-	u16 limitLow;
-	u16 baseLow;
-	u8 baseMid;
-	u8 access;
-	u8 limitHigh : 4;
-	u8 flags : 4;
-	u8 baseHigh;
+	uint16_t 	limit_low;
+	uint16_t 	base_low;
+	uint8_t 	base_mid;
+	uint8_t 	access;
+	uint8_t 	limit_high 	: 4;
+	uint8_t 	flags 		: 4;
+	uint8_t 	base_high;
 } ATTR GDTDesc;
+
+#define MAX_DESCRIPTORS 3
 
 static GDTR 	_gdtr;
 static GDTDesc 	_gdt[MAX_DESCRIPTORS];
@@ -27,34 +28,93 @@ static GDTDesc 	_gdt[MAX_DESCRIPTORS];
 //gdt_asm.asm
 void lgdt(GDTR *gdtr);
 
-void initGDT() {
+#define FLAG_32_BIT		0b0100
+#define FLAG_4K_GRAN	0b1000
+
+#define ACC_PRESENT			0b10000000
+
+#define ACC_RING_0			0b00000000
+#define ACC_RING_1			0b00100000
+#define ACC_RING_2			0b01000000
+#define ACC_RING_3			0b01100000
+
+#define ACC_SIGN			0b00010000
+
+#define ACC_CODE			0b00001000
+#define ACC_DATA			0b00000000
+
+#define ACC_DATA_DIR_UP		0b00000000
+#define ACC_DATA_DIR_DOWN	0b00000100
+
+#define ACC_CODE_CONF_ONLY	0b00000000
+#define ACC_CODE_CONF_PERM	0b00000100
+
+#define ACC_CODE_READABLE	0b00000010
+#define ACC_DATA_WRITABLE	0b00000010
+
+
+static void gdt_set_gate(	size_t 		num,
+							uint32_t 	base,
+							uint32_t 	limit,
+							uint8_t 	access,
+							uint8_t 	flags)
+{
+	GDTDesc *desc = &_gdt[num];
 	
-	ASSERT(sizeof(GDTR) == 6, "bad GDTR alignment!");
-	ASSERT(sizeof(GDTDesc) == 8, "bad GDTDesc alignment!");
+	desc->base_low 		= base & 0xffff;
+	desc->base_mid 		= (base >> 16) & 0xff;
+	desc->base_high 	= (base >> 24) & 0xff;
+	
+	desc->limit_low 	= limit & 0xffff;
+	desc->limit_high	= (limit >> 16) & 0xf;
+	
+	desc->access		= access;
+	
+	desc->flags			= flags & 0xf;
+}
+
+void init_gdt() {
+	
+	ASSERT_SIZE(GDTR, 		6);
+	ASSERT_SIZE(GDTDesc, 	8);
 	
 	//null descriptor
-	memset((byte *)&_gdt[0], 0, sizeof(GDTDesc));
+	gdt_set_gate(0, 0, 0, 0, 0);
 	
 	//code descriptor
-	_gdt[1].limitLow = 0xffff;
-	_gdt[1].baseLow = 0;
-	_gdt[1].baseMid = 0;
-	_gdt[1].access = 0b10011010;
-	_gdt[1].limitHigh = 0xf;
-	_gdt[1].flags = 0b1100;
-	_gdt[1].baseHigh = 0;
+	uint8_t code_acc = 
+		ACC_PRESENT 		|
+		ACC_RING_0 			|
+		ACC_SIGN 			|
+		ACC_CODE 			|
+		ACC_CODE_CONF_ONLY 	|
+		ACC_CODE_READABLE;
+		
+	gdt_set_gate(
+		1,
+		0,
+		0xfffff,
+		code_acc,
+		FLAG_32_BIT | FLAG_4K_GRAN);
 	
 	//data descriptor
-	_gdt[2].limitLow = 0xffff;
-	_gdt[2].baseLow = 0;
-	_gdt[2].baseMid = 0;
-	_gdt[2].access = 0b10010010;
-	_gdt[2].limitHigh = 0xf;
-	_gdt[2].flags = 0b1100;
-	_gdt[2].baseHigh = 0;
+	uint8_t data_acc = 
+		ACC_PRESENT 		|
+		ACC_RING_0 			|
+		ACC_SIGN 			|
+		ACC_DATA 			|
+		ACC_DATA_DIR_UP 	|
+		ACC_DATA_WRITABLE;
+		
+	gdt_set_gate(
+		2,
+		0,
+		0xfffff,
+		data_acc,
+		FLAG_32_BIT | FLAG_4K_GRAN);
 	
 	_gdtr.size = sizeof(GDTDesc) * MAX_DESCRIPTORS - 1;
-	_gdtr.addr = (u32)&_gdt;
+	_gdtr.addr = (uint32_t)&_gdt;
 	
 	lgdt(&_gdtr);
 }

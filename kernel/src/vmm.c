@@ -5,25 +5,13 @@
 #include <stdlib.h>
 #include <isr.h>
 
-typedef u32 PTEntry;
-
-typedef struct {
-	PTEntry entries[1024];
-} PTable;
-
-typedef u32 PDEntry;
-
-typedef struct {
-	PDEntry entries[1024];
-} PDirectory;
-
 //vmm_asm.asm
 void vmm_load_PDBR(PDirectory *pd);
 void vmm_enable_paging();
 
-static void pf_isr(word id, u32 error) {
+static void pf_isr(word id, uint32_t error) {
 	printfln("*** page fault!");
-	halt();
+	stop();
 }
 
 #define PAGE_MASK			0xfffff000
@@ -160,10 +148,10 @@ static void *sbrk(word increment) {
 	return (void *)old_break;
 }
 
-void initVMM() {
+void init_vmm() {
 	
-	ASSERT(sizeof(PTEntry) == 4, "bad PTEntry alignment!");
-	ASSERT(sizeof(PDEntry) == 4, "bad PDEntry alignment!");
+	ASSERT_SIZE(PTEntry, 4);
+	ASSERT_SIZE(PDEntry, 4);
 
 	//end of kernel data
 	_kernel_break = (addr_t)&_KERNEL_END;
@@ -247,9 +235,9 @@ static Header *next(Header *last) {
 	return h;
 }
 
-void *kalloc(size_t size) {
+void *kmalloc(size_t size) {
 
-	printfln("kalloc");
+	printfln("kmalloc");
 	printfln("size: %d", size);
 	
 	size_t as = KALLOC_ALIGN(size);
@@ -263,7 +251,7 @@ void *kalloc(size_t size) {
 		
 		if (h->size == as) {
 			h->status = STATUS_ALLOCATED;
-			printfln("best fit kalloc!");
+			printfln("best fit kmalloc!");
 			return h;
 		}
 		
@@ -274,12 +262,12 @@ void *kalloc(size_t size) {
 			Header *h2 = next(h);
 			h2->size = as;
 			h2->status = STATUS_ALLOCATED;
-			printfln("split kalloc!");
+			printfln("split kmalloc!");
 			return h2;
 		}
 	}
 	
-	printfln("sbrk kalloc!");
+	printfln("sbrk kmalloc!");
 			
 	h = sbrk(sizeof(Header) + as);
 	h->size = as;
@@ -290,7 +278,7 @@ void *kalloc(size_t size) {
 
 void kfree(void *ptr) {
 
-	printfln("free");
+	printfln("kfree");
 
 	Header *h = (Header *)((byte *)ptr - sizeof(Header));
 	h->status = STATUS_FREE;
@@ -319,8 +307,6 @@ void kfree(void *ptr) {
 		sbrk(-(sizeof(Header) + last->size));
 	}
 }
-
-
 
 
 

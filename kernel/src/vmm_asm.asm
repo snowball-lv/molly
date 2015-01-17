@@ -7,8 +7,10 @@ global _vmm_load_PDBR
 _vmm_load_PDBR:
 	push ebp
 	mov ebp, esp
+	
 	mov eax, [ebp + 8]
 	mov cr3, eax
+	
 	pop ebp
 	ret
 	

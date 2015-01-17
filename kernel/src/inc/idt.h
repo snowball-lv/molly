@@ -4,5 +4,5 @@
 
 #define MAX_INTERRUPTS 256
 
-void initIDT();
+void init_idt();
 

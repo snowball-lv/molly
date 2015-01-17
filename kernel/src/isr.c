@@ -10,7 +10,7 @@ void set_isr(word id, void *handler) {
 }
 
 typedef void (*isr_handler)(word id);
-typedef void (*isr_handler2)(word id, u32 error);
+typedef void (*isr_handler2)(word id, uint32_t error);
 
 void default_isr_irq_master(word id) {
 
@@ -74,7 +74,7 @@ void default_isr(word id) {
 	__asm__("hlt");
 }
 
-void default_isr_error(word id, u32 error) {
+void default_isr_error(word id, uint32_t error) {
 
 	isr_handler2 handler = _ISRS[id];
 	if (handler) {

@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-void initPMM();
+void init_pmm();
 
 void pmm_unset_blocks(size_t first, size_t count);
 

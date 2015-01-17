@@ -12,18 +12,22 @@ static byte attrib = (VGA_BLACK << 4) | VGA_LIGHT_GRAY;
 static word xPos = 0;
 static word yPos = 0;
 
-void clear() {
-	u16 *addr = (u16 *)VGA_MEM;
-	u16 blank = attrib << 8 | ' ';
+void console_clear() {
+	uint16_t *addr = (uint16_t *)VGA_MEM;
+	uint16_t blank = attrib << 8 | ' ';
 	for (word i = 0; i < WIDTH * HEIGHT; i++)
 		*(addr + i) = blank;
 	xPos = 0;
 	yPos = 0;
 }
 
+void clear() {
+	console_clear();
+}
+
 static void scroll() {
-	u16 *dstRow = (u16 *)(VGA_MEM);
-	u16 *srcRow = dstRow + WIDTH;
+	uint16_t *dstRow = (uint16_t *)(VGA_MEM);
+	uint16_t *srcRow = dstRow + WIDTH;
 	for (word y = 0; y < HEIGHT - 1; y++) {
 		copy(
 			(byte *)srcRow,
@@ -32,7 +36,7 @@ static void scroll() {
 		dstRow = srcRow;
 		srcRow = dstRow + WIDTH;
 	}
-	u16 blank = attrib << 8 | ' ';
+	uint16_t blank = attrib << 8 | ' ';
 	for (word i = 0; i < WIDTH; i++)
 		*(dstRow + i) = blank;
 }
@@ -62,14 +66,14 @@ static void putc(byte character) {
 		return;
 	}
 	
-	u16 *addr = (u16 *)(VGA_MEM);
+	uint16_t *addr = (uint16_t *)(VGA_MEM);
 	addr += yPos * WIDTH;
 	addr += xPos;
 	*addr = attrib << 8 | character;
 	xPos++;
 }
 
-static void puts(string str) {
+static void puts(const byte *str) {
 	while (*str != 0)
 		putc(*str++);
 }
@@ -81,7 +85,7 @@ static byte *itoa(word value, byte *str, word base) {
     byte *low;
     // Check for supported base.
     if (base < 2 || base > 36) {
-		*str = null;
+		*str = 0;
         return str;
     }
     rc = ptr = str;
@@ -98,7 +102,7 @@ static byte *itoa(word value, byte *str, word base) {
         value /= base;
     } while (value);
     // Terminating the string.
-    *ptr-- = null;
+    *ptr-- = 0;
     // Invert the numbers.
     while (low < ptr) {
         byte tmp = *low;
@@ -128,7 +132,7 @@ static void printBin(word value) {
 	puts("b");
 }
 
-void printf(string format, ...) {
+void printf(const byte *format, ...) {
 	va_list args;
     va_start(args, format);
 	
@@ -153,7 +157,45 @@ void printf(string format, ...) {
 				format += 2;
 			break;
 			case 's':
-				puts(va_arg(args, string));
+				puts(va_arg(args, byte *));
+				format += 2;
+			break;
+			default: putc(*format++); break;
+			}
+		break;
+		default: putc(*format++); break;
+		}
+	}
+	
+	va_end(args);
+}
+
+void kprintf(const byte *format, ...) {
+	va_list args;
+    va_start(args, format);
+	
+	while (*format != 0) {
+		switch (*format) {
+		case '%': 
+			switch (*(format + 1)) {
+			case 'd':
+				printDec(va_arg(args, word));
+				format += 2;
+			break;
+			case 'x':
+				printHex(va_arg(args, word));
+				format += 2;
+			break;
+			case 'b':
+				printBin(va_arg(args, word));
+				format += 2;
+			break;
+			case 'c':
+				putc(va_arg(args, byte));
+				format += 2;
+			break;
+			case 's':
+				puts(va_arg(args, byte *));
 				format += 2;
 			break;
 			default: putc(*format++); break;

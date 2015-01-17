@@ -1,6 +1,7 @@
 bits 32
 
 extern _kernel_main
+extern _kmain
 
 section .start
 
@@ -9,8 +10,10 @@ start:
 	push ebp
 	mov ebp, esp
 	
-	mov edx, [ebp + 8] ;pointer to memory map
+	;save pointer to memory map
+	mov edx, [ebp + 8] 
 	
+	;set stack
 	mov eax, 0x7ffff
 	mov esp, eax
 	mov ebp, esp
@@ -18,13 +21,19 @@ start:
 	;enable FPU
 	FNINIT
 	
+	;push memory map
 	push edx
-	call _kernel_main
 	
-	;spin and sleep forever
-	.loop:
-	hlt
-	jmp .loop
+	;call kernel, never return
+	call _kmain
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	

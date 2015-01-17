@@ -2,8 +2,8 @@
 
 #include <types.h>
 
-void out8(u16 port, u8 value);
+void out8(uint16_t port, uint8_t value);
 
-u8 in8(u16 port);
+uint8_t in8(uint16_t port);
 
-u16 in16(u16 port);
+uint16_t in16(uint16_t port);

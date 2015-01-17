@@ -1,13 +1,29 @@
 #pragma once
 
-#include<types.h>
+#include <types.h>
 
-#define PAGE_SIZE			4096
+typedef uint32_t PTEntry;
 
-void initVMM();
+typedef struct {
+	PTEntry entries[1024];
+} PTable;
 
-void *kalloc(size_t size);
+typedef uint32_t PDEntry;
+
+typedef struct {
+	PDEntry entries[1024];
+} PDirectory;
+
+void init_vmm();
+
+void *kmalloc(size_t size);
 void kfree(void *ptr);
+
+
+
+
+
+
 
 
 

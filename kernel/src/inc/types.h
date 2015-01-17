@@ -1,27 +1,33 @@
 #pragma once
 
-typedef long long int 	s64;
-typedef int 			s32;
-typedef short 			s16;
-typedef char 			s8;
+typedef signed char 			int8_t;
+typedef short 					int16_t;
+typedef int 					int32_t;
+typedef long long	 			int64_t;
 
-typedef unsigned long long int 	u64;
-typedef unsigned int 			u32;
-typedef unsigned short 			u16;
-typedef unsigned char 			u8;
+typedef unsigned char 			uint8_t;
+typedef unsigned short 			uint16_t;
+typedef unsigned int	 		uint32_t;
+typedef unsigned long long	 	uint64_t;
 
-typedef s32 	word;
-typedef s8 		byte;
-typedef u8 		ubyte;
-typedef u32 	uword;
+typedef uint32_t 	size_t;
+typedef uint32_t 	addr_t;
 
-typedef uword 	size_t;
-typedef uword 	addr_t;
-typedef byte 	*string;
-
-#define null	0
+typedef char 		byte;
+typedef int32_t 	word;
+typedef uint32_t 	uword;
 
 typedef struct none_t {} none_t;
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -2,7 +2,7 @@
 
 #define CODE_SEL 0x8
 
-void initGDT();
+void init_gdt();
 
 
 

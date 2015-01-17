@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <pmm.h>
 #include <vmm.h>
-#include <kbd.h>
 
 #define MMAP_AVAILABLE 	0x1
 #define MMAP_RESERVED	0x2
@@ -17,10 +16,10 @@
 #define ATTR __attribute__((packed))
 
 typedef struct {
-	u64 base;
-	u64 size;
-	u32 type;
-	u32 reserved;
+	uint64_t base;
+	uint64_t size;
+	uint32_t type;
+	uint32_t reserved;
 } ATTR MemMapEntry;
 
 #undef ATTR
@@ -37,44 +36,24 @@ extern none_t _KERNEL_END;
 	
 static void printMemMap(MemMap *mm);
 	
-static void initBSS() {
+static void init_bss() {
 	addr_t start 	= (addr_t)&_BSS_START;
 	addr_t end		= (addr_t)&_BSS_END;
 	memset((void *)start, 0, end - start);
 }
-	
-word kernel_main(MemMap *mm) {
 
-	//zero init bss
-	initBSS();
-	
-	//assert the kernel size is 4k aligned
-	ASSERT_ALIGN(&_KERNEL_END, "kernel end");
+static void free_available_blocks(MemMap *mm) {
 
-	//clear the screen
-	clear();
-	
-	printfln("executing kernel...");
-	
-	initGDT();
-	initIDT();
-	initPIC();
-	initPIT();
-	
-	//enable interrupts
-	__asm__("sti");
-	
-	printMemMap(mm);
-	
-	initPMM();
-	
+	//free blocks
 	for (size_t i = 0; i < mm->size; i++) {
+	
 		MemMapEntry *e = &mm->entries[i];
+		
 		if (e->type == MMAP_AVAILABLE) {
 		
 			//assert the memory regions are 4k aligned
-			ASSERT_ALIGN(e->base, "mm entry base");
-			ASSERT_ALIGN(e->size, "mm entry size");
+			ASSERT_ALIGN(e->base);
+			ASSERT_ALIGN(e->size);
 			
 			size_t first = e->base / PAGE_SIZE;
 			size_t count = e->size / PAGE_SIZE;
@@ -85,12 +64,56 @@ word kernel_main(MemMap *mm) {
 	
 	//alloc 1M + kernel (esp at 0x7ffff)
 	pmm_set_blocks(0, (addr_t)&_KERNEL_END / PAGE_SIZE);
+}
+
+static void assert_kernel_build() {
+
+	//assert type sizes and kernel size
+	ASSERT_SIZE(int8_t, 	1);
+	ASSERT_SIZE(int16_t, 	2);
+	ASSERT_SIZE(int32_t, 	4);
+	ASSERT_SIZE(int64_t, 	8);
 	
-	initVMM();
-	initKBD();
+	ASSERT_SIZE(uint8_t, 	1);
+	ASSERT_SIZE(uint16_t, 	2);
+	ASSERT_SIZE(uint32_t, 	4);
+	ASSERT_SIZE(uint64_t, 	8);
 	
-	//printfln("dynamic word 1: %d", *w1);
-	//printfln("dynamic word 2: %d", *w2);
+	//assert the kernel size is 4k aligned
+	ASSERT_ALIGN(&_KERNEL_END);
+}
+	
+word kernel_main(MemMap *mm) {
+
+	//zero init bss
+	init_bss();
+	
+	//validate build
+	assert_kernel_build();
+
+	//clear the screen
+	clear();
+	
+	printfln("executing kernel...");
+	
+	init_gdt();
+	init_idt();
+	init_pic();
+	init_pit();
+	
+	//enable interrupts
+	__asm__("sti");
+	
+	//init and map physical memory
+	init_pmm();
+	free_available_blocks(mm);
+	
+	//enable paging and memory allocation
+	__asm__("cli");
+	init_vmm();
+	__asm__("sti");
+	
+	init_proc();
 	
 	printfln("kernel exited");
 	return 0xbabecafe;
@@ -127,8 +150,6 @@ static void printMemMap(MemMap *mm) {
 	}
 	
 }
-
-
 
 
 

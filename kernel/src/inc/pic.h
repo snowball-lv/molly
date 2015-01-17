@@ -15,15 +15,15 @@
 #define IRQ_SPURIOUS_MASTER		7
 #define IRQ_SPURIOUS_SLAVE		15
 
-void initPIC();
+void init_pic();
 
-u8 pic_read_data(u8 pic);
+uint8_t pic_read_data(uint8_t pic);
 
-void pic_write_data(u8 pic, u8 data);
+void pic_write_data(uint8_t pic, uint8_t data);
 
-void pic_eoi(u8 pic);
+void pic_eoi(uint8_t pic);
 
-u8 pic_isr(u8 pic);
+uint8_t pic_isr(uint8_t pic);
 
 
 

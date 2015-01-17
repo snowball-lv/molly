@@ -8,9 +8,9 @@
 
 #define READ_ISR	0x0b 
 
-u8 pic_isr(u8 pic) {
+uint8_t pic_isr(uint8_t pic) {
 
-	u16 port = (pic == PIC_MASTER) ?
+	uint16_t port = (pic == PIC_MASTER) ?
 		MASTER_COMMAND :
 		SLAVE_COMMAND;
 		
@@ -18,7 +18,7 @@ u8 pic_isr(u8 pic) {
 	return in8(port);
 }
 
-void initPIC() {
+void init_pic() {
 
 	//send Initialization Control Word 1
 	//start initialization
@@ -45,27 +45,27 @@ void initPIC() {
 	pic_write_data(PIC_SLAVE, 0xff);
 }
 
-u8 pic_read_data(u8 pic) {
+uint8_t pic_read_data(uint8_t pic) {
 
-	u16 port = (pic == PIC_MASTER) ?
+	uint16_t port = (pic == PIC_MASTER) ?
 		MASTER_DATA :
 		SLAVE_DATA;
 	
 	return in8(port);
 }
 
-void pic_write_data(u8 pic, u8 data) {
+void pic_write_data(uint8_t pic, uint8_t data) {
 
-	u16 port = (pic == PIC_MASTER) ?
+	uint16_t port = (pic == PIC_MASTER) ?
 		MASTER_DATA :
 		SLAVE_DATA;
 		
 	out8(port, data);
 }
 
-void pic_eoi(u8 pic) {
+void pic_eoi(uint8_t pic) {
 
-	u16 port = (pic == PIC_MASTER) ?
+	uint16_t port = (pic == PIC_MASTER) ?
 		MASTER_COMMAND :
 		SLAVE_COMMAND;
 		

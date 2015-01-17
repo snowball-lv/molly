@@ -1,16 +1,16 @@
 #pragma once
 
 #include <types.h>
+#include <klib.h>
+#include <console.h>
 
 void copy(void *src, void *dst, uword num);
 
-void memset(void *ptr, byte value, size_t num);
-
 void sleep(uword millis);
 
-void halt();
+size_t strlen(const byte *str);
 
-typedef ubyte *va_list;
+typedef byte *va_list;
 	
 #define	STACK_SIZE(type) \
 	(((sizeof(type) + sizeof(word) - 1) / \
@@ -26,22 +26,6 @@ typedef ubyte *va_list;
 #define va_end(ap)
 
 #define NAME(m) #m
-
-#define ASSERT(ex, msg) 	\
-	if (!(ex)) {			\
-		printfln(msg);		\
-		halt();				\
-	}
-
-#define ASSERT_ALIGN(addr, msg) 		\
-	ASSERT(								\
-		((addr_t)(addr) % 4096) == 0,	\
-		msg " is not 4k aligned!")
-		
-		
-
-
-
 
 
 

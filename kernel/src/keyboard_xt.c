@@ -11,7 +11,7 @@
 		type = EVENT_TYPE_BREAK; \
 	break; \
 
-void setEvent(KeyEvent *e, u8 scanCode) {
+void setEvent(KeyEvent *e, uint8_t scanCode) {
 	
 	word key = KEY_UNKNOWN;
 	word type = EVENT_TYPE_NONE;

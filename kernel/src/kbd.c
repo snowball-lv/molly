@@ -12,7 +12,7 @@
 #define CTRL_STATUS		0x64
 #define CTRL_COMMAND	0x64
 
-static u8 read_input() {
+static uint8_t read_input() {
 	return in8(ENC_INPUT_BUF);
 }
 
@@ -20,7 +20,7 @@ static byte getChar(word key);
 
 static void kbd_isr(word id) {
 
-	u8 sc = read_input();
+	uint8_t sc = read_input();
 	
 	KeyEvent e = {0};
 	setEvent(&e, sc);
@@ -39,7 +39,7 @@ void initKBD() {
 	set_isr(IRQ_BASE + PIC_IRQ_KBD, kbd_isr);
 
 	//enable keyboard
-	u8 mask = pic_read_data(PIC_MASTER);
+	uint8_t mask = pic_read_data(PIC_MASTER);
 	mask &= ~(1 << PIC_IRQ_KBD);
 	pic_write_data(PIC_MASTER, mask);
 }

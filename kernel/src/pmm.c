@@ -3,14 +3,14 @@
 #include <console.h>
 #include <stdlib.h>
 
-#define BLOCK_SIZE 			4096
+#define BLOCK_SIZE 			(4096)
 #define MAX_BLOCKS			(0xffffffff / BLOCK_SIZE)
 #define BLOCKS_PER_ENTRY	(sizeof(word) * 8)
 #define MAP_SIZE			(MAX_BLOCKS / BLOCKS_PER_ENTRY)
 #define MAP_BYTES			(MAP_SIZE * sizeof(word))
 #define BLOCKS				(MAP_SIZE * BLOCKS_PER_ENTRY)
 
-#define ENTRY(block)		((block)/ BLOCKS_PER_ENTRY)
+#define ENTRY(block)		((block) / BLOCKS_PER_ENTRY)
 #define POS(block)			((block) & BLOCKS_PER_ENTRY)
 
 static word 	_mem_map[MAP_SIZE];
@@ -27,7 +27,7 @@ static byte pmm_test(word block) {
 	return _mem_map[ENTRY(block)] & (1 << POS(block));
 }
 
-void initPMM() {
+void init_pmm() {
 	memset(_mem_map, 0xff, MAP_BYTES);
 }
 
