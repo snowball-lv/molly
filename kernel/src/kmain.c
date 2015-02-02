@@ -8,8 +8,8 @@
 #include <idt.h>
 #include <pic.h>
 #include <pit.h>
+#include <proc.h>
 
-static void wait_loop();
 static void zero_bss();
 static void assert_kernel_build();
 static void free_available_blocks(MemMap *mm);
@@ -48,15 +48,12 @@ void kmain(MemMap *mm) {
 	__asm__("sti");
 	
 	//TODO
+	//init_proc();
 	
 	//boot complete
 	kprintfln("booting complete...");
 	
-	//wait for interrupts
-	wait_loop();
-}
-
-static void wait_loop() {
+	//never return, wait for interrupts
 	while(1)
 		halt();
 }

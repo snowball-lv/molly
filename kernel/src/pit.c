@@ -17,7 +17,7 @@ clock_t pit_get_ticks() {
 	return _pit_ticks;
 }
 
-static void tick_isr(isr_info_t *info) {
+static void tick_isr(trapframe_t *tf) {
 	_pit_ticks++;
 }
 
@@ -26,7 +26,7 @@ void init_pit() {
 	//send control word
 	out8(COMMAND_WORD, 0b00110110);
 	
-	word count = PIT_HZ / (float)CLOCKS_PER_SEC;
+	size_t count = PIT_HZ / (float)CLOCKS_PER_SEC;
 	
 	//LSB
 	out8(COUNTER_0, count & 0xff);

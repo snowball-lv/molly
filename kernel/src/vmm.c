@@ -143,8 +143,8 @@ static void *sbrk(word increment) {
 	return (void *)old_break;
 }
 
-static void pf_isr(isr_info_t *info) {
-	kprintfln("*** page fault! %x", info->err_code);
+static void pf_isr(trapframe_t *tf) {
+	kprintfln("*** page fault! %x", tf->err_code);
 }
 
 void init_vmm() {
@@ -306,6 +306,9 @@ void kfree(void *ptr) {
 		sbrk(-(sizeof(Header) + last->size));
 	}
 }
+
+
+
 
 
 

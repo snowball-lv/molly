@@ -76,29 +76,29 @@ void isr_add_handler(uint32_t num, isr_fptr ptr) {
 		_ISR_PTRS[num] = n;
 }
 
-void isr_handler(isr_info_t info) {
+void isr_handler(trapframe_t *tf) {
 	
 	//irq
-	if (is_irq_spurious(info.num)) {
-		if (is_irq_slave(info.num))
+	if (is_irq_spurious(tf->num)) {
+		if (is_irq_slave(tf->num))
 			pic_eoi(PIC_MASTER);
 		return;
 	}
 	
-	isr_node_t *n = _ISR_PTRS[info.num];
+	isr_node_t *n = _ISR_PTRS[tf->num];
 	if (n == 0) {
-		kprintfln("unhandled int: %d", info.num);
+		kprintfln("unhandled int: %d", tf->num);
 	} else {
 		while (n) {
-			n->fptr(&info);
+			n->fptr(tf);
 			n = n->next;
 		}
 	}
 	
 	//irq
-	if (is_irq_slave(info.num))
+	if (is_irq_slave(tf->num))
 		pic_eoi(PIC_SLAVE);
-	if (is_irq_master(info.num))
+	if (is_irq_master(tf->num))
 		pic_eoi(PIC_MASTER);
 }
 

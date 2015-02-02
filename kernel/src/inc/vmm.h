@@ -19,7 +19,17 @@ void init_vmm();
 void *kmalloc(size_t size);
 void kfree(void *ptr);
 
+typedef uint32_t pte_t;
 
+typedef struct {
+	pte_t entries[1024];
+} pt_t;
+
+typedef uint32_t pde_t;
+
+typedef struct {
+	pde_t entries[1024];
+} pd_t;
 
 
 

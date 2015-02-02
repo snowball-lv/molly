@@ -18,22 +18,6 @@ void memset(void *ptr, byte value, size_t num);
 typedef uword clock_t;
 
 clock_t clock();
-
-#define ASSERT(ex, msg) 	\
-	if (!(ex)) {			\
-		kprintfln(msg);		\
-		stop();				\
-	}
-
-#define ASSERT_ALIGN(addr) 				\
-	ASSERT(								\
-		((addr_t)(addr) % 4096) == 0,	\
-		#addr " is not 4k aligned!")
-
-#define ASSERT_SIZE(type, size) 	\
-	ASSERT(							\
-		sizeof(type) == (size),		\
-		#type " is wrong size!")
 		
 void copy(void *src, void *dst, uword num);
 
@@ -58,7 +42,21 @@ typedef byte *va_list;
 
 #define NAME(m) #m		
 		
-		
+#define ASSERT(ex, msg) 	\
+	if (!(ex)) {			\
+		kprintfln(msg);		\
+		stop();				\
+	}
+
+#define ASSERT_ALIGN(addr) 				\
+	ASSERT(								\
+		((addr_t)(addr) % 4096) == 0,	\
+		#addr " is not 4k aligned!")
+
+#define ASSERT_SIZE(type, size) 	\
+	ASSERT(							\
+		sizeof(type) == (size),		\
+		#type " is wrong size!")	
 		
 		
 		

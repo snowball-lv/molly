@@ -7,23 +7,29 @@ typedef void (*isr_w_fptr)();
 extern isr_w_fptr _ISR_WRAPPERS[MAX_INTERRUPTS];
 
 //don't fuck around with this
-typedef struct isr_info_t {
-	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	uint32_t num, err_code;
-	uint32_t eip, cs, eflags;
-} isr_info_t;
+typedef struct {
 
-typedef void (*isr_fptr)(isr_info_t *info);
+	uint32_t edi;
+	uint32_t esi;
+	uint32_t ebp;
+	uint32_t esp;
+	uint32_t ebx;
+	uint32_t edx;
+	uint32_t ecx;
+	uint32_t eax;
+	
+	uint32_t num;
+	uint32_t err_code;
+	
+	uint32_t eip;
+	uint32_t cs;
+	uint32_t eflags;
+	
+} trapframe_t;
+
+typedef void (*isr_fptr)(trapframe_t *tf);
 
 void isr_add_handler(uint32_t num, isr_fptr ptr);
-
-
-
-
-
-
-
-
 
 
 

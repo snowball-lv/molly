@@ -38,9 +38,11 @@ extern _isr_handler
 	
 isr_common:
 	pushad
+	push esp
 	call _isr_handler
+	add esp, 4 ;esp
 	popad
-	add esp, 8
+	add esp, 8 ;number and error code
 	iretd
 	
 	
