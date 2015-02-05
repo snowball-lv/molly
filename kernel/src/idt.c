@@ -1,9 +1,9 @@
 #include <idt.h>
 #include <console.h>
-#include <types.h>
 #include <gdt.h>
 #include <klib.h>
 #include <interrupt.h>
+#include <string.h>
 
 #define ATTR __attribute__((packed))
 

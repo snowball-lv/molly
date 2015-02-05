@@ -10,33 +10,16 @@ void stop() {
 	__asm__("hlt");
 }
 
-void memset(void *ptr, byte value, size_t num) {
-	for (size_t i = 0; i < num; i++)
-		((byte *)ptr)[i] = value;
-}
-
 clock_t clock() {
 	return pit_get_ticks();
 }
 
-void copy(void *src, void *dst, uword num) {
-	for (uword i = 0; i < num; i++)
-		((byte *)dst)[i] = ((byte *)src)[i];
-}
-
-void sleep(uword millis) {
+void sleep(uintmax_t millis) {
 	clock_t now = clock();
 	float secs = (float)millis/1000.f;
 	clock_t target = now + secs * CLOCKS_PER_SEC;
 	while (clock() < target)
 		__asm__("hlt");
-}
-
-size_t strlen(const byte *str) {
-	size_t s = 0;
-	while (str != 0)
-		str++;
-	return s;
 }
 
 

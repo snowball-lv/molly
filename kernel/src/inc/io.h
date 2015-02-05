@@ -1,6 +1,6 @@
 #pragma once
 
-#include <types.h>
+#include <stdint.h>
 
 void out8(uint16_t port, uint8_t value);
 

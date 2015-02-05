@@ -1,6 +1,7 @@
 #include <console.h>
-#include <types.h>
 #include <klib.h>
+#include <string.h>
+#include <stdarg.h>
 
 #define VGA_MEM 		0xb8000
 #define WIDTH 			80
@@ -8,14 +9,14 @@
 #define VGA_BLACK 		0x0
 #define VGA_LIGHT_GRAY 	0x7
 
-static byte attrib = (VGA_BLACK << 4) | VGA_LIGHT_GRAY;
-static word xPos = 0;
-static word yPos = 0;
+static char attrib = (VGA_BLACK << 4) | VGA_LIGHT_GRAY;
+static int xPos = 0;
+static int yPos = 0;
 
 void console_clear() {
 	uint16_t *addr = (uint16_t *)VGA_MEM;
 	uint16_t blank = attrib << 8 | ' ';
-	for (word i = 0; i < WIDTH * HEIGHT; i++)
+	for (int i = 0; i < WIDTH * HEIGHT; i++)
 		*(addr + i) = blank;
 	xPos = 0;
 	yPos = 0;
@@ -24,16 +25,13 @@ void console_clear() {
 static void scroll() {
 	uint16_t *dstRow = (uint16_t *)(VGA_MEM);
 	uint16_t *srcRow = dstRow + WIDTH;
-	for (word y = 0; y < HEIGHT - 1; y++) {
-		copy(
-			(byte *)srcRow,
-			(byte *)dstRow,
-			WIDTH * 2);
+	for (int y = 0; y < HEIGHT - 1; y++) {
+		memcpy(srcRow, dstRow, WIDTH * 2);
 		dstRow = srcRow;
 		srcRow = dstRow + WIDTH;
 	}
 	uint16_t blank = attrib << 8 | ' ';
-	for (word i = 0; i < WIDTH; i++)
+	for (int i = 0; i < WIDTH; i++)
 		*(dstRow + i) = blank;
 }
 
@@ -46,7 +44,7 @@ static void newLine() {
 	}
 }
 
-static void putc(byte character) {
+static void putc(char character) {
 
 	if (xPos >= WIDTH)
 		newLine();
@@ -69,16 +67,16 @@ static void putc(byte character) {
 	xPos++;
 }
 
-static void puts(const byte *str) {
+static void puts(const char *str) {
 	while (*str != 0)
 		putc(*str++);
 }
 
 //don't touch
-static byte *itoa(word value, byte *str, word base) {
-    byte *rc;
-    byte *ptr;
-    byte *low;
+static char *itoa(int value, char *str, int base) {
+    char *rc;
+    char *ptr;
+    char *low;
     // Check for supported base.
     if (base < 2 || base > 36) {
 		*str = 0;
@@ -101,34 +99,34 @@ static byte *itoa(word value, byte *str, word base) {
     *ptr-- = 0;
     // Invert the numbers.
     while (low < ptr) {
-        byte tmp = *low;
+        char tmp = *low;
         *low++ = *ptr;
         *ptr-- = tmp;
     }
     return rc;
 }
 
-static void printDec(word value) {
-	byte buffer[(sizeof(word) * 8) + 1];
-	byte *str = itoa(value, buffer, 10);
+static void printDec(int value) {
+	char buffer[(sizeof(int) * 8) + 1];
+	char *str = itoa(value, buffer, 10);
 	puts(str);
 }
 
-static void printHex(word value) {
-	byte buffer[(sizeof(word) * 8) + 1];
-	byte *str = itoa(value, buffer, 16);
+static void printHex(int value) {
+	char buffer[(sizeof(int) * 8) + 1];
+	char *str = itoa(value, buffer, 16);
 	puts("0x");
 	puts(str);
 }
 
-static void printBin(word value) {
-	byte buffer[(sizeof(word) * 8) + 1];
-	byte *str = itoa(value, buffer, 2);
+static void printBin(int value) {
+	char buffer[(sizeof(int) * 8) + 1];
+	char *str = itoa(value, buffer, 2);
 	puts(str);
 	puts("b");
 }
 
-void kprintf(const byte *format, ...) {
+void kprintf(const char *format, ...) {
 	va_list args;
     va_start(args, format);
 	
@@ -137,23 +135,23 @@ void kprintf(const byte *format, ...) {
 		case '%': 
 			switch (*(format + 1)) {
 			case 'd':
-				printDec(va_arg(args, word));
+				printDec(va_arg(args, int));
 				format += 2;
 			break;
 			case 'x':
-				printHex(va_arg(args, word));
+				printHex(va_arg(args, int));
 				format += 2;
 			break;
 			case 'b':
-				printBin(va_arg(args, word));
+				printBin(va_arg(args, int));
 				format += 2;
 			break;
 			case 'c':
-				putc(va_arg(args, byte));
+				putc(va_arg(args, int));
 				format += 2;
 			break;
 			case 's':
-				puts(va_arg(args, byte *));
+				puts(va_arg(args, char *));
 				format += 2;
 			break;
 			default: putc(*format++); break;

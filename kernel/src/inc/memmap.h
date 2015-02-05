@@ -1,6 +1,6 @@
 #pragma once
 
-#include <types.h>
+#include <string.h>
 
 #define MMAP_AVAILABLE 	0x1
 #define MMAP_RESERVED	0x2
@@ -19,6 +19,6 @@ typedef struct {
 #undef ATTR
 
 typedef struct {
-	uword size;
+	size_t size;
 	MemMapEntry *entries;
 } MemMap;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <types.h>
+#include <stdint.h>
 
 #define PIC_MASTER		0
 #define PIC_SLAVE		1

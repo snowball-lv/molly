@@ -1,7 +1,7 @@
 #include <gdt.h>
-#include <types.h>
 #include <console.h>
 #include <klib.h>
+#include <string.h>
 
 #define ATTR __attribute__((packed))
 

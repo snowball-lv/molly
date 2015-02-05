@@ -1,22 +1,21 @@
 #include <interrupt.h>
-#include <types.h>
 #include <pic.h>
 #include <console.h>
 #include <vmm.h>
 
-static byte is_irq_master(uint32_t num) {
+static char is_irq_master(uint32_t num) {
 	if (num >= 32 && num < 40)
 		return 1;
 	return 0;
 }
 
-static byte is_irq_slave(uint32_t num) {
+static char is_irq_slave(uint32_t num) {
 	if (num >= 40 && num < 48)
 		return 1;
 	return 0;
 }
 
-static byte is_irq_spurious(uint32_t num) {
+static char is_irq_spurious(uint32_t num) {
 	
 	if (num == PIC_IRQ_BASE + PIC_IRQ_SPURIOUS_MASTER) {
 	
@@ -44,36 +43,10 @@ static byte is_irq_spurious(uint32_t num) {
 	return 0;
 }
 
-typedef struct isr_node_t isr_node_t;
+static isr_fptr _ISR_PTRS[MAX_INTERRUPTS] = {0};
 
-struct isr_node_t {
-	isr_fptr fptr;
-	isr_node_t *next;
-};
-
-static isr_node_t *_ISR_PTRS[MAX_INTERRUPTS] = {0};
-
-static isr_node_t *last_node(uint32_t num) {
-	isr_node_t *n = _ISR_PTRS[num];
-	if (n) {
-		while (n->next)
-			n = n->next;
-		return n;
-	}
-	return 0;
-}
-
-void isr_add_handler(uint32_t num, isr_fptr ptr) {
-
-	isr_node_t *n = kmalloc(sizeof(isr_node_t));
-	n->fptr = ptr;
-	n->next = 0;
-	
-	isr_node_t *last = last_node(num);
-	if (last)
-		last->next = n;
-	else
-		_ISR_PTRS[num] = n;
+void isr_set_handler(uint32_t num, isr_fptr ptr) {
+	_ISR_PTRS[num] = ptr;
 }
 
 void isr_handler(trapframe_t *tf) {
@@ -85,14 +58,11 @@ void isr_handler(trapframe_t *tf) {
 		return;
 	}
 	
-	isr_node_t *n = _ISR_PTRS[tf->num];
-	if (n == 0) {
+	isr_fptr fptr = _ISR_PTRS[tf->num];
+	if (fptr == 0) {
 		kprintfln("unhandled int: %d", tf->num);
 	} else {
-		while (n) {
-			n->fptr(tf);
-			n = n->next;
-		}
+		fptr(tf);
 	}
 	
 	//irq

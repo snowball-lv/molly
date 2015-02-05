@@ -4,6 +4,7 @@
 #include <console.h>
 #include <klib.h>
 #include <interrupt.h>
+#include <string.h>
 
 #define PIT_HZ			1193182
 #define COUNTER_0 		0x40
@@ -18,6 +19,7 @@ clock_t pit_get_ticks() {
 }
 
 static void tick_isr(trapframe_t *tf) {
+	tf = tf;
 	_pit_ticks++;
 }
 
@@ -35,7 +37,7 @@ void init_pit() {
 	out8(COUNTER_0, (count >> 8) & 0xff);
 	
 	//set timer isr
-	isr_add_handler(32, tick_isr);
+	isr_set_handler(32, tick_isr);
 	
 	//initialize ticks
 	_pit_ticks = 0;

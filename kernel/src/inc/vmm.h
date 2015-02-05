@@ -1,23 +1,9 @@
 #pragma once
 
-#include <types.h>
-
-typedef uint32_t PTEntry;
-
-typedef struct {
-	PTEntry entries[1024];
-} PTable;
-
-typedef uint32_t PDEntry;
-
-typedef struct {
-	PDEntry entries[1024];
-} PDirectory;
+#include <string.h>
+#include <stdint.h>
 
 void init_vmm();
-
-void *kmalloc(size_t size);
-void kfree(void *ptr);
 
 typedef uint32_t pte_t;
 
@@ -30,6 +16,18 @@ typedef uint32_t pde_t;
 typedef struct {
 	pde_t entries[1024];
 } pd_t;
+
+pte_t *vmm_get_pte(pt_t *pt, uintptr_t addr);
+pde_t *vmm_get_pde(pd_t *pd, uintptr_t addr);
+
+#define VMM_PRESENT			(0b01)
+#define VMM_READ_WRITE		(0b10)
+
+#define VMM_PAGE_MASK		(0xfffff000)
+
+
+
+
 
 
 

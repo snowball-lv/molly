@@ -1,7 +1,7 @@
 #pragma once
 
-#include <types.h>
 #include <idt.h>
+#include <stdint.h>
 
 typedef void (*isr_w_fptr)();
 extern isr_w_fptr _ISR_WRAPPERS[MAX_INTERRUPTS];
@@ -29,7 +29,7 @@ typedef struct {
 
 typedef void (*isr_fptr)(trapframe_t *tf);
 
-void isr_add_handler(uint32_t num, isr_fptr ptr);
+void isr_set_handler(uint32_t num, isr_fptr ptr);
 
 
 
