@@ -2,7 +2,7 @@
 #include <console.h>
 #include <klib.h>
 
-#define BLOCK_SIZE 			(4096)
+#define BLOCK_SIZE 			(PAGE_SIZE)
 #define MAX_BLOCKS			(0xffffffff / BLOCK_SIZE)
 #define BLOCKS_PER_ENTRY	(sizeof(int) * 8)
 #define MAP_ENTRIES			(MAX_BLOCKS / BLOCKS_PER_ENTRY)
@@ -53,15 +53,14 @@ void *pmm_alloc_block() {
 		}
 	}
 	
-	kprintfln("*** out of free blocks!");
-	stop();
+	panic("*** out of free blocks!");
 	
 	return 0;
 }
 
 void pmm_free_block(void *ptr) {
 
-	ASSERT_ALIGN(ptr);
+	ASSERT_PAGE_ALIGNED((uintptr_t)ptr);
 	
 	size_t block = (uintptr_t)ptr / BLOCK_SIZE;
 	pmm_unset(block);

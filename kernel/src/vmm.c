@@ -22,7 +22,7 @@ pde_t *vmm_get_pde(pd_t *pd, uintptr_t addr) {
 	return &pd->entries[PD_INDEX(addr)];
 }
 
-static void vmm_alloc_page(size_t num) {
+void vmm_alloc_page(size_t num) {
 
 	pd_t *pd = (pd_t *)0xfffff000;
 	uintptr_t addr = num * PAGE_SIZE;
@@ -44,7 +44,7 @@ static void vmm_alloc_page(size_t num) {
 	}
 }
 
-static void vmm_alloc_pages(size_t first, size_t count) {
+void vmm_alloc_pages(size_t first, size_t count) {
 	for (size_t i = first; i < first + count; i++)
 		vmm_alloc_page(i);
 }
@@ -81,7 +81,7 @@ static void vmm_free_page(size_t num) {
 	}
 }
 
-static void vmm_free_pages(size_t first, size_t count) {
+void vmm_free_pages(size_t first, size_t count) {
 	for (size_t i = first; i < first + count; i++)
 		vmm_free_page(i);
 }
@@ -105,8 +105,6 @@ void init_vmm() {
 	isr_set_handler(14, pf_isr);
 }
 
-#define MEM_ALIGNMENT	(sizeof(intmax_t))
-
 #define MEM_USED		(1)
 #define MEM_FREE		(2)
 
@@ -115,16 +113,77 @@ typedef struct header_t header_t;
 struct header_t {
 	int 		state;
 	size_t 		size;
-	size_t 		offset;
-	header_t 	*next;
+	header_t	*next;
+	void		*mem;
 };
 
-void *kmalloc_custom(size_t size, size_t alignment) {
+static header_t *first() {
+	proc_t *p = get_kproc();
+	if (p->heap_base == p->heap_top)
+		return 0;
+	return p->heap_base;
+}
 
+static header_t *next(header_t *h) {
+	return h == 0 ? first() : h->next;
+}
+
+#define ALIGN_RIGHT(v, a)	\
+	(((v) + (a) - 1) & ~((a) - 1))
+
+static void *kmalloc_custom(size_t size, size_t alignment) {
+
+	kprintfln("kmalloc %d, %d", size, alignment);
 	
+	if (size == 0)
+		return 0;
+	
+	//check if alignment is natural
+	ASSERT_ALIGNMENT(alignment, MEM_ALIGNMENT);
+
+	header_t *h = 0;
+	
+	while ((h = next(h)) != 0) {
+		//recycle usable chunks
+	}
+	
+	//no reusable chunks, allocate more
+	
+	kprintfln("no reusable chunks");
+	
+	//should be page aligned
+	void *brk = get_kproc()->heap_top;
+	
+	ASSERT_PAGE_ALIGNED((uintptr_t)brk);
+	
+	void *new_brk = (char *)brk + sizeof(header_t);
+	
+	void *mem_start = (void *)
+		ALIGN_RIGHT((uintptr_t)new_brk, alignment);
+		
+	new_brk = (char *)mem_start + size;
+	
+	ASSERT_ALIGNMENT((uintptr_t)new_brk, MEM_ALIGNMENT);
+	
+	kprintfln("old brk: %d", brk);
+	kprintfln("new brk: %d", new_brk);
 
 	return 0;
 }
+
+void *kmalloc_page() {
+	return kmalloc_custom(PAGE_SIZE, PAGE_SIZE);
+}
+
+void *kmalloc(size_t size) {
+	return kmalloc_custom(size, MEM_ALIGNMENT);
+}
+
+
+
+
+
+
 
 
 

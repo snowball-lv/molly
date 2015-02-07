@@ -18,7 +18,7 @@ void init_kproc() {
 	current = &kproc;
 
 	kproc.id 		= next_pid++;
-	kproc.heap_base = (uintptr_t)&_HEAP_START;
+	kproc.heap_base = &_HEAP_START;
 	kproc.heap_top 	= kproc.heap_base;
 	
 	//allocate page directory
@@ -32,7 +32,7 @@ void init_kproc() {
 	*last |= (uintptr_t)kproc.pd;
 	
 	//page count to identity map
-	size_t count = kproc.heap_base / PAGE_SIZE;
+	size_t count = (uintptr_t)kproc.heap_base / PAGE_SIZE;
 	
 	//identity map kernel pages
 	for (size_t i = 0; i < count; i++) {

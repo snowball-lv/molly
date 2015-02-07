@@ -25,7 +25,8 @@ pde_t *vmm_get_pde(pd_t *pd, uintptr_t addr);
 
 #define VMM_PAGE_MASK		(0xfffff000)
 
-
+void *kmalloc_page();
+void *kmalloc(size_t size);
 
 
 

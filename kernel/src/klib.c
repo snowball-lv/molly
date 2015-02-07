@@ -1,5 +1,6 @@
 #include <klib.h>
 #include <pit.h>
+#include <console.h>
 
 void halt() {
 	__asm__("hlt");
@@ -22,7 +23,10 @@ void sleep(uintmax_t millis) {
 		__asm__("hlt");
 }
 
-
+void panic(const char *msg) {
+	kprintfln(msg);
+	stop();
+}
 
 
 

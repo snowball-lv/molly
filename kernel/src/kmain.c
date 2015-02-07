@@ -23,8 +23,11 @@ void kmain(MemMap *mm) {
 	//clear the screen
 	console_clear();
 	
+	//assert memory alignment is natural
+	ASSERT_ALIGNMENT(PAGE_SIZE, MEM_ALIGNMENT);
+	
 	//assert the kernel size is 4k aligned
-	ASSERT_ALIGN(&_KERNEL_END);
+	ASSERT_PAGE_ALIGNED((uintptr_t)&_KERNEL_END);
 	
 	//set up gdt
 	init_gdt();
@@ -57,8 +60,10 @@ void kmain(MemMap *mm) {
 	//TODO
 	//init_proc();
 	
+	kmalloc_page();
+	
 	//boot complete
-	//kprintfln("booting complete...");
+	kprintfln("booting complete...");
 	
 	//never return, wait for interrupts
 	while(1)
@@ -80,8 +85,8 @@ static void free_mm_entry(MemMapEntry *e) {
 		return;
 	
 	//assert the memory regions are 4k aligned
-	ASSERT_ALIGN(e->base);
-	ASSERT_ALIGN(e->size);
+	ASSERT_PAGE_ALIGNED(e->base);
+	ASSERT_PAGE_ALIGNED(e->size);
 	
 	size_t first = e->base / PAGE_SIZE;
 	size_t count = e->size / PAGE_SIZE;

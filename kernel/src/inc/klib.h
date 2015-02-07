@@ -2,7 +2,8 @@
 
 #include <stdint.h>
 
-#define PAGE_SIZE	4096
+#define PAGE_SIZE		4096
+#define MEM_ALIGNMENT	(sizeof(intmax_t))
 
 uint32_t read_ebp();
 uint32_t read_esp();
@@ -19,23 +20,40 @@ clock_t clock();
 
 void sleep(uintmax_t millis);
 
+void panic(const char *msg);
+
 #define NAME(m) #m		
 		
 #define ASSERT(ex, msg) 	\
 	if (!(ex)) {			\
-		kprintfln(msg);		\
-		stop();				\
+		panic((msg));		\
 	}
-
-#define ASSERT_ALIGN(addr) 					\
-	ASSERT(									\
-		((uintptr_t)(addr) % 4096) == 0,	\
-		#addr " is not 4k aligned!")
 
 #define ASSERT_SIZE(type, size) 	\
 	ASSERT(							\
 		sizeof(type) == (size),		\
 		#type " is wrong size!")	
+		
+#define ASSERT_PAGE_ALIGNED(addr) 				\
+	ASSERT(										\
+		((addr) % PAGE_SIZE) == 0,	\
+		#addr " is not page aligned!")	
+		
+#define ASSERT_ALIGNMENT(v, a) 			\
+	ASSERT(								\
+		((v) % (a)) == 0,	\
+		#v " is not aligned to " #a)	
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		
 		
