@@ -27,9 +27,16 @@ pde_t *vmm_get_pde(pd_t *pd, uintptr_t addr);
 
 void *kmalloc_page();
 void *kmalloc(size_t size);
+void kfree(void *ptr);
 
+#define ALIGN_RIGHT(v, a)	\
+	(((v) + (a) - 1) & ~((a) - 1))
 
+#define MEM_ALIGN_RIGHT(v)	\
+	(ALIGN_RIGHT((v), MEM_ALIGNMENT))
 
+#define PAGE_ALIGN_RIGHT(v)	\
+	(ALIGN_RIGHT((v), PAGE_SIZE))
 
 
 

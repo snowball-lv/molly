@@ -127,6 +127,7 @@ static void printBin(int value) {
 }
 
 void kprintf(const char *format, ...) {
+
 	va_list args;
     va_start(args, format);
 	

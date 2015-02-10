@@ -20,7 +20,7 @@ void sleep(uintmax_t millis) {
 	float secs = (float)millis/1000.f;
 	clock_t target = now + secs * CLOCKS_PER_SEC;
 	while (clock() < target)
-		__asm__("hlt");
+		halt();
 }
 
 void panic(const char *msg) {
@@ -28,6 +28,13 @@ void panic(const char *msg) {
 	stop();
 }
 
+void enable_ints() {
+	__asm__("sti");
+}
+
+void disable_ints() {
+	__asm__("cli");
+}
 
 
 

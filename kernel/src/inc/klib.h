@@ -22,6 +22,9 @@ void sleep(uintmax_t millis);
 
 void panic(const char *msg);
 
+void enable_ints();
+void disable_ints();
+
 #define NAME(m) #m		
 		
 #define ASSERT(ex, msg) 	\

@@ -45,25 +45,20 @@ void kmain(MemMap *mm) {
 	//init vmm and enable paging
 	init_vmm();
 	
-	//init vmm and enable paging
-	//init_vmm();
-	
 	//set up pic
-	//init_pic();
+	init_pic();
 	
 	//set up pit
-	//init_pit();
+	init_pit();
 	
 	//enable interrupts
-	//__asm__("sti");
+	enable_ints();
 	
-	//TODO
-	//init_proc();
-	
-	kmalloc_page();
+	//create_process();
+	//create_process();
 	
 	//boot complete
-	kprintfln("booting complete...");
+	//kprintfln("booting complete...");
 	
 	//never return, wait for interrupts
 	while(1)
@@ -103,6 +98,10 @@ static void free_available_blocks(MemMap *mm) {
 	//alloc 1M + kernel (esp at 0x7ffff)
 	pmm_set_blocks(0, (uintptr_t)&_KERNEL_END / PAGE_SIZE);
 }
+
+
+
+
 
 
 
