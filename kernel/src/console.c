@@ -26,7 +26,7 @@ static void scroll() {
 	uint16_t *dstRow = (uint16_t *)(VGA_MEM);
 	uint16_t *srcRow = dstRow + WIDTH;
 	for (int y = 0; y < HEIGHT - 1; y++) {
-		memcpy(srcRow, dstRow, WIDTH * 2);
+		memcpy(dstRow, srcRow, WIDTH * 2);
 		dstRow = srcRow;
 		srcRow = dstRow + WIDTH;
 	}
@@ -55,8 +55,8 @@ static void putc(char character) {
 	} else if (character == CR) {
 		xPos = 0;
 		return;
-	}else if (character == TAB) {
-		xPos = xPos % 4 + 4;
+	} else if (character == TAB) {
+		xPos = (xPos + 3) & (~4);
 		return;
 	}
 	

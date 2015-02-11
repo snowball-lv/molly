@@ -21,8 +21,7 @@ clock_t pit_get_ticks() {
 
 static void tick_isr(trapframe_t *tf) {
 	_pit_ticks++;
-	kprintfln("tick: %d", _pit_ticks);
-	//reschedule();
+	reschedule();
 }
 
 void init_pit() {

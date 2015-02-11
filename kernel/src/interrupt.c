@@ -51,12 +51,18 @@ void isr_set_handler(uint32_t num, isr_fptr ptr) {
 
 void isr_handler(trapframe_t *tf) {
 	
-	//irq
+	//irq spurious
 	if (is_irq_spurious(tf->num)) {
 		if (is_irq_slave(tf->num))
 			pic_eoi(PIC_MASTER);
 		return;
 	}
+	
+	//irq eoi
+	if (is_irq_slave(tf->num))
+		pic_eoi(PIC_SLAVE);
+	if (is_irq_master(tf->num))
+		pic_eoi(PIC_MASTER);
 	
 	isr_fptr fptr = _ISR_PTRS[tf->num];
 	if (fptr == 0) {
@@ -64,12 +70,6 @@ void isr_handler(trapframe_t *tf) {
 	} else {
 		fptr(tf);
 	}
-	
-	//irq
-	if (is_irq_slave(tf->num))
-		pic_eoi(PIC_SLAVE);
-	if (is_irq_master(tf->num))
-		pic_eoi(PIC_MASTER);
 }
 
 #define ISR_WRAPPER_NAME(num) isr_wrapper_##num

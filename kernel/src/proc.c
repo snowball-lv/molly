@@ -4,18 +4,12 @@
 #include <klib.h>
 #include <vmm.h>
 #include <console.h>
+#include <sync.h>
 
 static pid_t next_pid = 1;
 
 static proc_t kproc;
 static proc_t *current;
-
-static void schedule_process(proc_t *p) {
-	proc_t *tmp = current;
-	while (tmp->next != 0)
-		tmp = tmp->next;
-	tmp->next = p;
-}
 
 proc_t *get_kproc() { return &kproc; }
 proc_t *get_current_proc() { return current; }
@@ -87,6 +81,13 @@ static int dummy_entry() {
 	return 0;
 }
 
+static void schedule_process(proc_t *p) {
+	proc_t *tmp = current;
+	while (tmp->next != 0)
+		tmp = tmp->next;
+	tmp->next = p;
+}
+
 void create_process() {
 
 	//enter critical section
@@ -110,7 +111,7 @@ void create_process() {
 	p->pd 			= 0; //TODO
 	p->heap_base 	= (void *)0x40000000;
 	p->heap_top 	= p->heap_base;
-	p->esp 			= top;
+	p->sp 			= top;
 	p->entry 		= dummy_entry;
 	p->next 		= 0;
 	
@@ -127,6 +128,8 @@ void reschedule() {
 
 	//enter cricital section
 	disable_ints();
+
+	//kprintfln("reschedule");
 	
 	proc_t *old_proc = current;
 	proc_t *new_proc = old_proc->next;
@@ -140,10 +143,12 @@ void reschedule() {
 		return;
 	}
 	
+	//kprintfln("switch %d to %d", (int)old_proc->id, (int)new_proc->id);
+	
 	current = new_proc;
 	
 	//context switch
-	switch_context(&old_proc->esp, new_proc->esp);
+	switch_context(&old_proc->sp, new_proc->sp);
 	
 	//exit critical section
 	enable_ints();

@@ -9,6 +9,7 @@
 #include <pit.h>
 #include <types.h>
 #include <proc.h>
+#include <sync.h>
 
 static void zero_bss();
 static void free_available_blocks(MemMap *mm);
@@ -55,10 +56,9 @@ void kmain(MemMap *mm) {
 	enable_ints();
 	
 	//create_process();
-	//create_process();
 	
 	//boot complete
-	//kprintfln("booting complete...");
+	kprintfln("booting complete...");
 	
 	//never return, wait for interrupts
 	while(1)
@@ -98,9 +98,6 @@ static void free_available_blocks(MemMap *mm) {
 	//alloc 1M + kernel (esp at 0x7ffff)
 	pmm_set_blocks(0, (uintptr_t)&_KERNEL_END / PAGE_SIZE);
 }
-
-
-
 
 
 
