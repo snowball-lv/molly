@@ -1,7 +1,7 @@
 #include <interrupt.h>
 #include <pic.h>
 #include <console.h>
-#include <vmm.h>
+#include <paging.h>
 
 static char is_irq_master(uint32_t num) {
 	if (num >= 32 && num < 40)

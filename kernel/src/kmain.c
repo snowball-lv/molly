@@ -2,24 +2,26 @@
 #include <console.h>
 #include <pmm.h>
 #include <memmap.h>
-#include <vmm.h>
+#include <paging.h>
 #include <gdt.h>
 #include <idt.h>
 #include <pic.h>
 #include <pit.h>
 #include <types.h>
+#include <kallocator.h>
 #include <proc.h>
-#include <sync.h>
-
-static void zero_bss();
-static void free_available_blocks(MemMap *mm);
 
 extern none_t _KERNEL_END;
 
+extern none_t _BSS_START;
+extern none_t _BSS_END;
+
 void kmain(MemMap *mm) {
 
-	//init bss
-	zero_bss();
+	//zero bss
+	uintptr_t bss_start = (uintptr_t)&_BSS_START;
+	uintptr_t bss_end	= (uintptr_t)&_BSS_END;
+	memset((void *)bss_start, 0, bss_end - bss_start);
 	
 	//clear the screen
 	console_clear();
@@ -38,13 +40,36 @@ void kmain(MemMap *mm) {
 	
 	//init physical memory
 	init_pmm();
-	free_available_blocks(mm);
 	
-	//init default process
-	init_kproc();
+	//free available blocks from memory map
+	for (size_t i = 0; i < mm->size; i++) {
 	
-	//init vmm and enable paging
-	init_vmm();
+		MemMapEntry *e = &mm->entries[i];
+		
+		if (e->type != MMAP_AVAILABLE)
+			continue;
+			
+		//assert the memory regions are 4k aligned
+		ASSERT_PAGE_ALIGNED(e->base);
+		ASSERT_PAGE_ALIGNED(e->size);
+			
+		size_t first = e->base / PAGE_SIZE;
+		size_t count = e->size / PAGE_SIZE;
+		
+		pmm_unset_blocks(first, count);
+	}
+	
+	//alloc 1M + kernel (esp at 0x7ffff)
+	pmm_set_blocks(0, (uintptr_t)&_KERNEL_END / PAGE_SIZE);
+	
+	//init default process, thread and page directory
+	init_null_proc();
+	
+	//init virtual memory and enable paging
+	init_paging();
+	
+	//init kernel heap allocator
+	init_kernel_allocator();
 	
 	//set up pic
 	init_pic();
@@ -55,8 +80,6 @@ void kmain(MemMap *mm) {
 	//enable interrupts
 	enable_ints();
 	
-	//create_process();
-	
 	//boot complete
 	kprintfln("booting complete...");
 	
@@ -64,43 +87,6 @@ void kmain(MemMap *mm) {
 	while(1)
 		halt();
 }
-
-extern none_t _BSS_START;
-extern none_t _BSS_END;
-
-static void zero_bss() {
-	uintptr_t start = (uintptr_t)&_BSS_START;
-	uintptr_t end	= (uintptr_t)&_BSS_END;
-	memset((void *)start, 0, end - start);
-}
-
-static void free_mm_entry(MemMapEntry *e) {
-
-	if (e->type != MMAP_AVAILABLE)
-		return;
-	
-	//assert the memory regions are 4k aligned
-	ASSERT_PAGE_ALIGNED(e->base);
-	ASSERT_PAGE_ALIGNED(e->size);
-	
-	size_t first = e->base / PAGE_SIZE;
-	size_t count = e->size / PAGE_SIZE;
-	
-	pmm_unset_blocks(first, count);
-}
-
-static void free_available_blocks(MemMap *mm) {
-
-	//free blocks
-	for (size_t i = 0; i < mm->size; i++)
-		free_mm_entry(&mm->entries[i]);
-	
-	//alloc 1M + kernel (esp at 0x7ffff)
-	pmm_set_blocks(0, (uintptr_t)&_KERNEL_END / PAGE_SIZE);
-}
-
-
-
 
 
 

@@ -2,9 +2,6 @@
 
 #include <stdint.h>
 
-#define PAGE_SIZE		4096
-#define MEM_ALIGNMENT	(sizeof(intmax_t))
-
 uint32_t read_ebp();
 uint32_t read_esp();
 uint32_t read_eip();
@@ -14,7 +11,7 @@ void stop();
 
 #define CLOCKS_PER_SEC 100
 
-typedef uintmax_t clock_t;
+typedef unsigned clock_t;
 
 clock_t clock();
 

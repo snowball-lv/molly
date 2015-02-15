@@ -5,7 +5,6 @@
 #include <klib.h>
 #include <interrupt.h>
 #include <string.h>
-#include <proc.h>
 
 #define PIT_HZ			1193182
 #define COUNTER_0 		0x40
@@ -21,7 +20,6 @@ clock_t pit_get_ticks() {
 
 static void tick_isr(trapframe_t *tf) {
 	_pit_ticks++;
-	reschedule();
 }
 
 void init_pit() {
