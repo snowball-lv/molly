@@ -46,7 +46,9 @@ static void alloc_page(size_t index) {
 	
 	if (*pte == 0) {
 		kprintfln("allocating page: %d", index);
-		map_pte(pt, PAGE_PTE(index), pmm_alloc_block());
+		void *phys = pmm_alloc_block();
+		kprintfln("phys: %x", phys);
+		map_pte(pt, PAGE_PTE(index), phys);
 	}
 }
 
@@ -108,13 +110,26 @@ void init_paging() {
 	proc_t *p = get_null_proc();
 	
 	load_PDBR(p->pd);
+	
 	enable_paging();
 	
 	//set PF isr
 	isr_set_handler(14, pf_isr);
 }
 
+#define ADDR_PDE(addr)	(PAGE_PDE((uintptr_t)(addr) / PAGE_SIZE))
+#define ADDR_PTE(addr)	(PAGE_PTE((uintptr_t)(addr) / PAGE_SIZE))
 
+static pt_t *get_pt(size_t index) {
+	return (pt_t *)(0xffc00000 + PAGE_SIZE * index);
+}
+
+void *virt_to_phys(void *virt) {
+	
+	pt_t *pt = get_pt(ADDR_PDE(virt));
+	pte_t *pte = &pt->entries[ADDR_PTE(virt)];
+	return (void *)(*pte & PAGE_MASK);
+}
 
 
 

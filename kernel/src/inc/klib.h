@@ -9,7 +9,7 @@ uint32_t read_eip();
 void halt();
 void stop();
 
-#define CLOCKS_PER_SEC 100
+#define CLOCKS_PER_SEC 		(10)
 
 typedef unsigned clock_t;
 

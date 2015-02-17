@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <console.h>
 #include <paging.h>
+#include <sync.h>
 
 #define PAGE_ALIGN_RIGHT(v)	\
 	(ALIGN_RIGHT((v), PAGE_SIZE))
@@ -19,7 +20,11 @@ extern none_t _HEAP_START;
 static uintptr_t _heap_base;
 static uintptr_t _heap_top;
 
+static mutex_t _m;
+
 void init_kernel_allocator() {
+	
+	mutex_init(&_m);
 	
 	_heap_base 	= (uintptr_t)&_HEAP_START;
 	_heap_top 	= _heap_base;
@@ -31,6 +36,8 @@ static void *kmalloc_custom(size_t size, size_t alignment) {
 	
 	if (size == 0)
 		return 0;
+
+	mutex_lock(&_m);
 		
 	uintptr_t brk = _heap_top;
 	
@@ -51,6 +58,8 @@ static void *kmalloc_custom(size_t size, size_t alignment) {
 	alloc_pages(first, count);
 	
 	_heap_top = new_brk;
+	
+	mutex_release(&_m);
 	
 	return (void *)mem;
 }

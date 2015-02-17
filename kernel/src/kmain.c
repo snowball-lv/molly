@@ -10,11 +10,16 @@
 #include <types.h>
 #include <kallocator.h>
 #include <proc.h>
+#include <scheduler.h>
+#include <thread.h>
 
 extern none_t _KERNEL_END;
 
 extern none_t _BSS_START;
 extern none_t _BSS_END;
+
+static int thread_task();
+static int process_task();
 
 void kmain(MemMap *mm) {
 
@@ -71,6 +76,9 @@ void kmain(MemMap *mm) {
 	//init kernel heap allocator
 	init_kernel_allocator();
 	
+	//init process and thread switching
+	init_scheduler();
+	
 	//set up pic
 	init_pic();
 	
@@ -80,6 +88,10 @@ void kmain(MemMap *mm) {
 	//enable interrupts
 	enable_ints();
 	
+	//create_thread(thread_task);
+	
+	create_process(process_task);
+	
 	//boot complete
 	kprintfln("booting complete...");
 	
@@ -87,6 +99,25 @@ void kmain(MemMap *mm) {
 	while(1)
 		halt();
 }
+
+static int process_task() {
+	
+	kprintfln("process task");
+	
+	//while(1);
+	
+	return 0;
+}
+
+static int thread_task() {
+	
+	kprintfln("thread task");
+	
+	while(1);
+	
+	return 0;
+}
+
 
 
 

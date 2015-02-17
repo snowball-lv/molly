@@ -2,6 +2,7 @@
 #include <klib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <sync.h>
 
 #define VGA_MEM 		0xb8000
 #define WIDTH 			80
@@ -13,7 +14,12 @@ static char attrib = (VGA_BLACK << 4) | VGA_LIGHT_GRAY;
 static int xPos = 0;
 static int yPos = 0;
 
+static mutex_t _m;
+
 void console_clear() {
+
+	mutex_init(&_m);
+
 	uint16_t *addr = (uint16_t *)VGA_MEM;
 	uint16_t blank = attrib << 8 | ' ';
 	for (int i = 0; i < WIDTH * HEIGHT; i++)
@@ -128,6 +134,8 @@ static void printBin(int value) {
 
 void kprintf(const char *format, ...) {
 
+	mutex_lock(&_m);
+
 	va_list args;
     va_start(args, format);
 	
@@ -163,6 +171,8 @@ void kprintf(const char *format, ...) {
 	}
 	
 	va_end(args);
+	
+	mutex_release(&_m);
 }
 
 
