@@ -32,7 +32,7 @@ void init_kernel_allocator() {
 
 static void *kmalloc_custom(size_t size, size_t alignment) {
 	
-	kprintfln("kmalloc: %d, %d", size, alignment);
+	//kprintfln("kmalloc: %d, %d", size, alignment);
 	
 	if (size == 0)
 		return 0;
@@ -43,7 +43,7 @@ static void *kmalloc_custom(size_t size, size_t alignment) {
 	
 	size_t first = PAGE_ALIGN_RIGHT(brk) / PAGE_SIZE;
 	
-	kprintfln("first: %d", first);
+	//kprintfln("first: %d", first);
 	
 	uintptr_t mem = ALIGN_RIGHT(brk, alignment);
 	uintptr_t new_brk = mem + size;
@@ -53,7 +53,7 @@ static void *kmalloc_custom(size_t size, size_t alignment) {
 	size_t new_page = PAGE_ALIGN_RIGHT(new_brk) / PAGE_SIZE;
 	size_t count = new_page - old_page;
 	
-	kprintfln("count: %d", count);
+	//kprintfln("count: %d", count);
 	
 	alloc_pages(first, count);
 	
@@ -73,7 +73,7 @@ void *kmalloc(size_t size) {
 }
 
 void kfree(void *ptr) {
-	
+	kprintfln("kfree: %x", ptr);
 }
 
 

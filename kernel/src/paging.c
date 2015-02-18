@@ -35,7 +35,7 @@ static void alloc_page(size_t index) {
 	pde_t *pde = &pd->entries[PAGE_PDE(index)];
 	
 	if (*pde == 0) {
-		kprintfln("allocating new page table");
+		//kprintfln("allocating new page table");
 		void *page_table = pmm_alloc_block();
 		memset(page_table, 0, PAGE_SIZE);
 		map_pde(pd, PAGE_PDE(index), page_table);
@@ -45,9 +45,9 @@ static void alloc_page(size_t index) {
 	pte_t *pte = &pt->entries[PAGE_PTE(index)];
 	
 	if (*pte == 0) {
-		kprintfln("allocating page: %d", index);
+		//kprintfln("allocating page: %d", index);
 		void *phys = pmm_alloc_block();
-		kprintfln("phys: %x", phys);
+		//kprintfln("phys: %x", phys);
 		map_pte(pt, PAGE_PTE(index), phys);
 	}
 }

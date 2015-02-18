@@ -88,7 +88,7 @@ void kmain(MemMap *mm) {
 	//enable interrupts
 	enable_ints();
 	
-	//create_thread(thread_task);
+	create_thread(thread_task);
 	
 	create_process(process_task);
 	
@@ -113,7 +113,7 @@ static int thread_task() {
 	
 	kprintfln("thread task");
 	
-	while(1);
+	//while(1);
 	
 	return 0;
 }
