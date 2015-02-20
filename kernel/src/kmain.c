@@ -88,9 +88,11 @@ void kmain(MemMap *mm) {
 	//enable interrupts
 	enable_ints();
 	
-	create_thread(thread_task);
+	//create_thread(thread_task);
 	
-	create_process(process_task);
+	//create_process(process_task);
+	
+	init_pci();
 	
 	//boot complete
 	kprintfln("booting complete...");

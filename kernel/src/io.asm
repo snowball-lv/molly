@@ -32,6 +32,38 @@ _in16:
 	in ax, dx
 	pop ebp
 	ret
+
+;uint32_t in32(uint16_t port);
+global _in32
+_in32:
+	push ebp
+	mov ebp, esp
+	mov dx, [ebp + 8]
+	in eax, dx
+	pop ebp
+	ret
+
+;void out32(uint16_t port, uint32_t value);
+global _out32
+_out32:
+	push ebp
+	mov ebp, esp
+	mov dx, [ebp + 8]
+	mov eax, [ebp + 12]
+	out dx, eax
+	pop ebp
+	ret
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	

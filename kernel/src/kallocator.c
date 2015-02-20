@@ -73,7 +73,7 @@ void *kmalloc(size_t size) {
 }
 
 void kfree(void *ptr) {
-	kprintfln("kfree: %x", ptr);
+	//kprintfln("kfree: %x", ptr);
 }
 
 
