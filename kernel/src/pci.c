@@ -83,9 +83,13 @@ static void dump_device(uint16_t vendor_id, uint16_t device_id) {
 }
 
 static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
-	
+		
+	//IDE exception
+	if (class == 0x1 && subclass == 0x1)
+		prog_if = 0x0;
+						
 	for (size_t i = 0; i < PCI_CLASSCODETABLE_LEN; i++) {
-	
+						
 		PCI_CLASSCODETABLE *c = &PciClassCodeTable[i];
 		
 		if (	c->BaseClass == class && 
@@ -100,7 +104,7 @@ static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
 		}
 	}
 	
-	kprintfln("device info not available.");
+	kprintfln("class info not available.");
 }
 
 static void scan_function(uint8_t bus, uint8_t dev, uint8_t fun) {
