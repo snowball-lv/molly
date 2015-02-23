@@ -1,7 +1,27 @@
 #include <vfs.h>
 
-static vfs_node _root;
+#include <kallocator.h>
+#include <klib.h>
+#include <console.h>
 
-vfs_node *vfs_open(vfs_node *n, char *path) {
-	return n->open != 0 ? n->open(path) : 0;
+vnode *_root = 0;
+
+void mount_root(vnode *n) {
+	_root = n;
 }
+
+void init_vfs() {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+

@@ -14,3 +14,21 @@ void *memset (void *ptr, int value, size_t num) {
 		((unsigned char *)ptr)[i] = (unsigned char)value;
 	return ptr;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

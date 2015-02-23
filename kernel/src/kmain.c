@@ -12,14 +12,14 @@
 #include <proc.h>
 #include <scheduler.h>
 #include <thread.h>
+#include <vfs.h>
+#include <pci.h>
+#include <ramfs.h>
 
 extern none_t _KERNEL_END;
 
 extern none_t _BSS_START;
 extern none_t _BSS_END;
-
-static int thread_task();
-static int process_task();
 
 void kmain(MemMap *mm) {
 
@@ -88,11 +88,10 @@ void kmain(MemMap *mm) {
 	//enable interrupts
 	enable_ints();
 	
-	//create_thread(thread_task);
+	init_vfs();
+	init_ramfs();
 	
-	//create_process(process_task);
-	
-	init_pci();
+	//init_pci();
 	
 	//boot complete
 	kprintfln("booting complete...");
@@ -102,23 +101,13 @@ void kmain(MemMap *mm) {
 		halt();
 }
 
-static int process_task() {
-	
-	kprintfln("process task");
-	
-	//while(1);
-	
-	return 0;
-}
 
-static int thread_task() {
-	
-	kprintfln("thread task");
-	
-	//while(1);
-	
-	return 0;
-}
+
+
+
+
+
+
 
 
 

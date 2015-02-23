@@ -1,9 +1,32 @@
 #pragma once
 
-typedef struct vfs_node vfs_node;
+#include <string.h>
 
-typedef vfs_node *(* vfs_open_t)(char *path);
+#define TYPE_DIR	(1)
 
-struct vfs_node {
-	vfs_open_t open;
+typedef struct vnode vnode;
+
+typedef vnode *(*open_t)(const char *path);
+
+struct vnode {
+	int 	type;
+	open_t	open;
 };
+
+void init_vfs();
+
+void mount_root(vnode *n);
+
+
+
+
+
+
+
+
+
+
+
+
+
+

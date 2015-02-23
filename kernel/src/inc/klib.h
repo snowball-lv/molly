@@ -22,6 +22,8 @@ void panic(const char *msg);
 void enable_ints();
 void disable_ints();
 
+const char *kstrchr(const char *str, int character);
+
 #define NAME(m) #m		
 		
 #define ASSERT(ex, msg) 	\

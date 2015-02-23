@@ -74,12 +74,12 @@ static void dump_device(uint16_t vendor_id, uint16_t device_id) {
 	for (size_t i = 0; i < PCI_DEVTABLE_LEN; i++) {
 		PCI_DEVTABLE *d = &PciDevTable[i];
 		if (d->VenId == vendor_id && d->DevId == device_id) {
-			kprintfln("%s", d->ChipDesc);
+			kprintfln("- %s", d->ChipDesc);
 			return;
 		}
 	}
 	
-	kprintfln("device info not available.");
+	kprintfln("- device info not available.");
 }
 
 static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
@@ -96,7 +96,7 @@ static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
 				c->SubClass == subclass &&
 				c->ProgIf == prog_if)
 		{
-			kprintfln(	"%s | %s | %s",
+			kprintfln(	"-- %s | %s | %s",
 						c->BaseDesc,
 						c->SubDesc,
 						c->ProgDesc);
@@ -104,7 +104,7 @@ static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
 		}
 	}
 	
-	kprintfln("class info not available.");
+	kprintfln("-- class info not available.");
 }
 
 static void scan_function(uint8_t bus, uint8_t dev, uint8_t fun) {

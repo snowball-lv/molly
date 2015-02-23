@@ -2,6 +2,7 @@
 
 #include <paging.h>
 #include <thread.h>
+#include <vfs.h>
 
 #define PROC_STATE_NONE	 	(-1)
 #define PROC_STATE_RUNNING 	(1)
