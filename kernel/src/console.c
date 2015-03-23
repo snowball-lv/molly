@@ -160,11 +160,6 @@ void kprintf(const char *format, ...) {
 				i++;
 				break;
 			
-			case 's':
-				puts(va_arg(args, char *));
-				i++;
-				break;
-			
 			}
 			
 			switch (str[i + 1]) {
