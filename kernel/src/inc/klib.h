@@ -24,17 +24,14 @@ void disable_ints();
 
 const char *kstrchr(const char *str, int character);
 
+
+
 #define NAME(m) #m		
 		
 #define ASSERT(ex, msg) 	\
 	if (!(ex)) {			\
 		panic((msg));		\
 	}
-
-#define ASSERT_SIZE(type, size) 	\
-	ASSERT(							\
-		sizeof(type) == (size),		\
-		#type " is wrong size!")	
 		
 #define ASSERT_PAGE_ALIGNED(addr) 				\
 	ASSERT(										\

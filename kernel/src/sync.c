@@ -7,6 +7,7 @@ void mutex_lock(mutex_t *m) {
 }
 
 void mutex_release(mutex_t *m) {
+	//replace with xchg to avoid ordering bugs
 	m->state = 1;
 }
 

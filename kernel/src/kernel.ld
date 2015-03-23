@@ -1,7 +1,7 @@
 OUTPUT(bin/kernel.exe)
 SECTIONS
 {
-	__KERNEL_BASE = 0x100000;
+	__KERNEL_BASE = 0xc0100000;
 	
 	.start (__KERNEL_BASE) : {
 		*(.start)
@@ -22,6 +22,7 @@ SECTIONS
 	}
 	
 	. = ALIGN(0x1000);
+	
 	__BSS_END 		= .;
 	__KERNEL_END 	= .;
 	__HEAP_START 	= .;

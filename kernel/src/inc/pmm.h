@@ -12,5 +12,5 @@ void *pmm_alloc_block();
 
 void pmm_free_block(void *ptr);
 
-
+void pmm_info();
 

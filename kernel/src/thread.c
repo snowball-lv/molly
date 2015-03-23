@@ -1,6 +1,6 @@
 #include <thread.h>
 
-#include <kallocator.h>
+#include <kalloc.h>
 #include <paging.h>
 #include <scheduler.h>
 #include <klib.h>

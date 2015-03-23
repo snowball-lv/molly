@@ -20,90 +20,152 @@ typedef struct {
 	uint8_t 	base_high;
 } ATTR GDTDesc;
 
-#define MAX_DESCRIPTORS 3
+_Static_assert(sizeof(GDTR) 	== 6, "GDTR size not 6");
+_Static_assert(sizeof(GDTDesc)	== 8, "GDTDesc size not 8");
 
-static GDTR 	_gdtr;
-static GDTDesc 	_gdt[MAX_DESCRIPTORS];
+//A struct describing a Task State Segment.
+typedef struct {
+
+	// The previous TSS - if we used hardware task switching this would form a linked list.
+	uint32_t prev_tss;
+	//The stack pointer to load when we change to kernel mode.
+	uint32_t esp0;
+	//The stack segment to load when we change to kernel mode.
+	uint32_t ss0;
+	//everything below here is unusued now.. 
+	
+	uint32_t esp1;
+	uint32_t ss1;
+	uint32_t esp2;
+	uint32_t ss2;
+	uint32_t cr3;
+	uint32_t eip;
+	uint32_t eflags;
+	uint32_t eax;
+	uint32_t ecx;
+	uint32_t edx;
+	uint32_t ebx;
+	uint32_t esp;
+	uint32_t ebp;
+	uint32_t esi;
+	uint32_t edi;
+	uint32_t es;         
+	uint32_t cs;        
+	uint32_t ss;        
+	uint32_t ds;        
+	uint32_t fs;       
+	uint32_t gs;         
+	uint32_t ldt;      
+	uint16_t trap;
+	uint16_t iomap_base;
+	
+} ATTR tss_entry_t;
+
+_Static_assert(sizeof(tss_entry_t) == 104, "tss_entry_t size not 104");
+
+#define FLAG_32_BIT			(0b0100)
+#define FLAG_4K_GRAN		(0b1000)
 
 //gdt_asm.asm
 void lgdt(GDTR *gdtr);
 
-#define FLAG_32_BIT			0b0100
-#define FLAG_4K_GRAN		0b1000
+#define MAX_DESCRIPTORS		(6)
 
-#define ACC_PRESENT			0b10000000
+static tss_entry_t tss_entry;
 
-#define ACC_RING_0			0b00000000
-#define ACC_RING_1			0b00100000
-#define ACC_RING_2			0b01000000
-#define ACC_RING_3			0b01100000
+static GDTDesc gdt[MAX_DESCRIPTORS] = {
+	{
+		//null descriptor
+		.base_low 	= 0,
+		.base_mid	= 0,
+		.base_high 	= 0,
+		.limit_low 	= 0,
+		.limit_high = 0,
+		.access		= 0,
+		.flags		= 0
+	}, {
+		//flat kernel code descriptor
+		.base_low 	= 0,
+		.base_mid	= 0,
+		.base_high 	= 0,
+		.limit_low 	= 0xffff,
+		.limit_high = 0xf,
+		.access		= 0b10011010,
+		.flags		= FLAG_32_BIT | FLAG_4K_GRAN
+	}, {
+		//flat kernel data descriptor
+		.base_low 	= 0,
+		.base_mid	= 0,
+		.base_high 	= 0,
+		.limit_low 	= 0xffff,
+		.limit_high = 0xf,
+		.access		= 0b10010010,
+		.flags		= FLAG_32_BIT | FLAG_4K_GRAN
+	}, {
+		//flat user code descriptor
+		.base_low 	= 0,
+		.base_mid	= 0,
+		.base_high 	= 0,
+		.limit_low 	= 0xffff,
+		.limit_high = 0xf,
+		.access		= 0b11111010,
+		.flags		= FLAG_32_BIT | FLAG_4K_GRAN
+	}, {
+		//flat user data descriptor
+		.base_low 	= 0,
+		.base_mid	= 0,
+		.base_high 	= 0,
+		.limit_low 	= 0xffff,
+		.limit_high = 0xf,
+		.access		= 0b11110010,
+		.flags		= FLAG_32_BIT | FLAG_4K_GRAN
+	}, {
+		//tss (set up in init)
+		.base_low 	= 0,
+		.base_mid	= 0,
+		.base_high 	= 0,
+		.limit_low 	= 0,
+		.limit_high = 0,
+		.access		= 0,
+		.flags		= 0
+	}
+};
 
-#define ACC_SIGN			0b00010000
+static GDTR gdtr = {
+	.size = sizeof(GDTDesc) * MAX_DESCRIPTORS - 1,
+	.addr = (uint32_t)&gdt
+};
 
-#define ACC_CODE			0b00001000
-#define ACC_DATA			0b00000000
+static char kstack[4096];
 
-#define ACC_DATA_DIR_UP		0b00000000
-#define ACC_DATA_DIR_DOWN	0b00000100
-
-#define ACC_CODE_CONF_ONLY	0b00000000
-#define ACC_CODE_CONF_PERM	0b00000100
-
-#define ACC_CODE_READABLE	0b00000010
-#define ACC_DATA_WRITABLE	0b00000010
-
-
-static void gdt_set_gate(	size_t 		num,
-							uint32_t 	base,
-							uint32_t 	limit,
-							uint8_t 	access,
-							uint8_t 	flags)
-{
-	GDTDesc *desc = &_gdt[num];
-	
-	desc->base_low 		= base & 0xffff;
-	desc->base_mid 		= (base >> 16) & 0xff;
-	desc->base_high 	= (base >> 24) & 0xff;
-	
-	desc->limit_low 	= limit & 0xffff;
-	desc->limit_high	= (limit >> 16) & 0xf;
-	
-	desc->access		= access;
-	
-	desc->flags			= flags & 0xf;
-}
+//gdt_asm.asm
+void tss_flush();
 
 void init_gdt() {
 	
-	ASSERT_SIZE(GDTR, 		6);
-	ASSERT_SIZE(GDTDesc, 	8);
+	lgdt(&gdtr);
 	
-	//null descriptor
-	gdt_set_gate(0, 0, 0, 0, 0);
+	uintptr_t base = (uintptr_t)&tss_entry;
+	uintptr_t limit = base + sizeof(tss_entry_t);
 	
-	//flat code descriptor
-	gdt_set_gate(
-		1,
-		0,
-		0xfffff,
-		0b10011010,
-		FLAG_32_BIT | FLAG_4K_GRAN);
+	GDTDesc *tssd = &gdt[5];
 	
-	//flat data descriptor
-	gdt_set_gate(
-		2,
-		0,
-		0xfffff,
-		0b10010010,
-		FLAG_32_BIT | FLAG_4K_GRAN);
+	tssd->base_low 	= base & 0xffff;
+	tssd->base_mid 	= (base >> 16) & 0xff;
+	tssd->base_high = (base >> 24) & 0xff;
 	
-	_gdtr.size = sizeof(GDTDesc) * MAX_DESCRIPTORS - 1;
-	_gdtr.addr = (uint32_t)&_gdt;
+	tssd->limit_low 	= limit & 0xffff;
+	tssd->limit_high 	= (limit >> 16) & 0xf;
 	
-	lgdt(&_gdtr);
+	tssd->access 	= 0b11101001;
+	tssd->flags 	= 0b0000;
+	
+	tss_entry.ss0 	= 0x10;
+	tss_entry.esp0 	= (uintptr_t)&kstack[4095];
+	
+	tss_flush();
+	
 }
-
-
 
 
 

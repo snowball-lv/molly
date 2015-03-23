@@ -8,13 +8,11 @@
 #include <pic.h>
 #include <pit.h>
 #include <types.h>
-#include <kallocator.h>
+#include <kalloc.h>
 #include <proc.h>
 #include <scheduler.h>
 #include <thread.h>
-#include <vfs.h>
 #include <pci.h>
-#include <ramfs.h>
 
 extern none_t _KERNEL_END;
 
@@ -87,9 +85,6 @@ void kmain(MemMap *mm) {
 	
 	//enable interrupts
 	enable_ints();
-	
-	init_vfs();
-	init_ramfs();
 	
 	//init_pci();
 	

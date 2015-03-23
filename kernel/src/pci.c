@@ -1,7 +1,7 @@
 #include <pci.h>
 
 #include <stdint.h>
-#include <kallocator.h>
+#include <kalloc.h>
 #include <io.h>
 #include <console.h>
 #include <pci_list.h>

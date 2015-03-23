@@ -2,23 +2,19 @@
 #include <klib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <sync.h>
+#include <param.h>
 
-#define VGA_MEM 		0xb8000
-#define WIDTH 			80
-#define HEIGHT 			25
-#define VGA_BLACK 		0x0
-#define VGA_LIGHT_GRAY 	0x7
+#define VGA_MEM 		(0xb8000 + KERNEL_OFF)
+#define WIDTH 			(80)
+#define HEIGHT 			(25)
+#define VGA_BLACK 		(0x0)
+#define VGA_LIGHT_GRAY 	(0x7)
 
 static char attrib = (VGA_BLACK << 4) | VGA_LIGHT_GRAY;
 static int xPos = 0;
 static int yPos = 0;
 
-static mutex_t _m;
-
 void console_clear() {
-
-	mutex_init(&_m);
 
 	uint16_t *addr = (uint16_t *)VGA_MEM;
 	uint16_t blank = attrib << 8 | ' ';
@@ -134,11 +130,60 @@ static void printBin(int value) {
 
 void kprintf(const char *format, ...) {
 
-	mutex_lock(&_m);
-
 	va_list args;
     va_start(args, format);
 	
+	const char *str = format;
+	
+	for (size_t i = 0; str[i] != 0; i++) {
+		if (str[i] == '%') {
+			
+			//wtf
+			//doesnt work with more than 4 cases
+			//split into 2 switches
+		
+			switch (str[i + 1]) {
+			case 'd':
+				printDec(va_arg(args, int));
+				i++;
+				break;
+			case 'c':
+				putc(va_arg(args, int));
+				i++;
+				break;
+			case 'x':
+				printHex(va_arg(args, int));
+				i++;
+				break;
+			case 'b':
+				printBin(va_arg(args, int));
+				i++;
+				break;
+			
+			case 's':
+				puts(va_arg(args, char *));
+				i++;
+				break;
+			
+			}
+			
+			switch (str[i + 1]) {
+			case 's':
+				puts(va_arg(args, char *));
+				i++;
+				break;
+			}
+			
+			if (str[i] == '%') {
+				putc(str[i]);
+			}
+			
+		} else {
+			putc(str[i]);
+		}
+	}
+	
+	/*
 	while (*format != 0) {
 		switch (*format) {
 		case '%': 
@@ -169,10 +214,9 @@ void kprintf(const char *format, ...) {
 		default: putc(*format++); break;
 		}
 	}
+	*/
 	
 	va_end(args);
-	
-	mutex_release(&_m);
 }
 
 

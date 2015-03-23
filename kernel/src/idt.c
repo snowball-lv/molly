@@ -4,6 +4,7 @@
 #include <klib.h>
 #include <interrupt.h>
 #include <string.h>
+#include <param.h>
 
 #define ATTR __attribute__((packed))
 
@@ -19,6 +20,9 @@ typedef struct {
 	uint8_t 	flags;
 	uint16_t 	addr_high;
 } ATTR IDTDesc;
+
+_Static_assert(sizeof(IDTR) 	== 6, "IDTR size not 6");
+_Static_assert(sizeof(IDTDesc)	== 8, "IDTDesc size not 8");
 
 static IDTR 	_idtr;
 static IDTDesc 	_idt[MAX_INTERRUPTS];
@@ -38,9 +42,6 @@ static void idt_set_gate(size_t num, uint32_t isr) {
 }
 
 void init_idt() {
-	
-	ASSERT_SIZE(IDTR, 		6);
-	ASSERT_SIZE(IDTDesc, 	8);
 		
 	for (size_t i = 0; i < MAX_INTERRUPTS; i++)
 		idt_set_gate(i, (uint32_t)_ISR_WRAPPERS[i]);

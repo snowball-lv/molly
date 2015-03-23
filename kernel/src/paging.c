@@ -104,9 +104,6 @@ void enable_paging();
 
 void init_paging() {
 	
-	ASSERT_SIZE(pte_t, 4);
-	ASSERT_SIZE(pde_t, 4);
-	
 	proc_t *p = get_null_proc();
 	
 	load_PDBR(p->pd);

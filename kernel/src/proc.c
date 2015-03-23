@@ -3,7 +3,7 @@
 #include <paging.h>
 #include <pmm.h>
 #include <types.h>
-#include <kallocator.h>
+#include <kalloc.h>
 #include <thread.h>
 #include <scheduler.h>
 #include <console.h>
@@ -107,6 +107,7 @@ void create_process(int (*entry)()) {
 	schedule_process(p);
 }
 
+proc_table_t proc_table;
 
 
 

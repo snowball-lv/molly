@@ -66,7 +66,8 @@ void isr_handler(trapframe_t *tf) {
 	
 	isr_fptr fptr = _ISR_PTRS[tf->num];
 	if (fptr == 0) {
-		kprintfln("unhandled int: %d", tf->num);
+		kprintfln("*** unhandled int: %d", tf->num);
+		panic("*** panic");
 	} else {
 		fptr(tf);
 	}

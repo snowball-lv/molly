@@ -6,7 +6,7 @@
 #include <paging.h>
 #include <sync.h>
 #include <thread.h>
-#include <kallocator.h>
+#include <kalloc.h>
 
 static proc_t 	*_current_proc;
 static mutex_t 	_schedule_m;

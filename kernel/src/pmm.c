@@ -16,22 +16,22 @@ typedef int	entry_t;
 #define ENTRY(block)		((block) / BLOCKS_PER_ENTRY)
 #define POS(block)			((block) % BLOCKS_PER_ENTRY)
 
-static entry_t _mem_map[MAP_ENTRIES];
+static entry_t mem_map[MAP_ENTRIES];
 
 static void pmm_set(size_t block) {
-	_mem_map[ENTRY(block)] |= (1 << POS(block));
+	mem_map[ENTRY(block)] |= (1 << POS(block));
 }
 
 static void pmm_unset(size_t block) {
-	_mem_map[ENTRY(block)] &= ~(1 << POS(block));
+	mem_map[ENTRY(block)] &= ~(1 << POS(block));
 }
 
 static int pmm_test(size_t block) {
-	return (_mem_map[ENTRY(block)] & (1 << POS(block))) != 0;
+	return (mem_map[ENTRY(block)] & (1 << POS(block))) != 0;
 }
 
 void init_pmm() {
-	memset(_mem_map, 0xff, MAP_BYTES);
+	memset(mem_map, 0xff, MAP_BYTES);
 }
 
 void pmm_unset_blocks(size_t first, size_t count) {
@@ -71,7 +71,21 @@ void pmm_free_block(void *ptr) {
 	pmm_unset(block);
 }
 
+void pmm_info() {
 
+	size_t free = 0;
+	
+	for (size_t i = 0; i < BLOCKS; i++) {
+		if (!pmm_test(i))
+			free++;
+	}
+	
+	free *= PAGE_SIZE;
+	free /= 1024; //kb
+	free /= 1024; //mb
+	
+	kprintfln("free mb: %d", free);
+}
 
 
 
