@@ -15,7 +15,7 @@ __attribute__((aligned(PAGE_SIZE)))
 pd_t init_pd = {
 	.entries = {
 		[0]
-			= (0) | PTE_P | PTE_RW | PTE_PS | PTE_U,
+			= (0) | PTE_P | PTE_RW | PTE_PS,
 		[KERNEL_BASE >> PDE_SHIFT]
 			= (0) | PTE_P | PTE_RW | PTE_PS
 	}
@@ -69,20 +69,19 @@ void kernel_main(MemMap *mm) {
 	//set up idt and interrupt handlers
 	init_idt();
 	
+	//remove lower mapping
+	init_pd.entries[0] = 0;
+	invlpg();
+	
 	//enable system calls
 	init_syscall();
 	
 	//user_mode();
 	
-	//remove lower mapping
-	init_pd.entries[0] = 0;
-	
 	kprintfln("init error");
 	
 	while(1);
 }
-
-
 
 
 

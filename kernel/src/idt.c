@@ -41,6 +41,20 @@ static void idt_set_gate(size_t num, uint32_t isr) {
 	desc->addr_high = (isr >> 16) & 0xffff;
 }
 
+#define I_PAGE_FAULT	(14)
+
+#define PF_P	(1 << 0)
+#define PF_W	(1 << 1)
+#define PF_U	(1 << 2)
+#define PF_R	(1 << 3)
+#define PF_I	(1 << 4)
+
+static void pf_handler(trapframe_t *tf) {
+
+	kprintfln("*** %x", read_cr2());
+	panic("*** page fault");
+}
+
 void init_idt() {
 		
 	for (size_t i = 0; i < MAX_INTERRUPTS; i++)
@@ -50,6 +64,8 @@ void init_idt() {
 	_idtr.addr = (uint32_t)&_idt;
 	
 	lidt(&_idtr);
+	
+	isr_set_handler(I_PAGE_FAULT, pf_handler);
 }
 
 

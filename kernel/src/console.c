@@ -129,7 +129,7 @@ static void printBin(int value) {
 }
 
 void kprintf(const char *format, ...) {
-
+	
 	va_list args;
     va_start(args, format);
 	
@@ -137,10 +137,6 @@ void kprintf(const char *format, ...) {
 	
 	for (size_t i = 0; str[i] != 0; i++) {
 		if (str[i] == '%') {
-			
-			//wtf
-			//doesnt work with more than 4 cases
-			//split into 2 switches
 		
 			switch (str[i + 1]) {
 			case 'd':
@@ -159,18 +155,13 @@ void kprintf(const char *format, ...) {
 				printBin(va_arg(args, int));
 				i++;
 				break;
-			
-			}
-			
-			switch (str[i + 1]) {
 			case 's':
 				puts(va_arg(args, char *));
 				i++;
 				break;
-			}
-			
-			if (str[i] == '%') {
+			default:
 				putc(str[i]);
+				break;
 			}
 			
 		} else {
@@ -178,41 +169,15 @@ void kprintf(const char *format, ...) {
 		}
 	}
 	
-	/*
-	while (*format != 0) {
-		switch (*format) {
-		case '%': 
-			switch (*(format + 1)) {
-			case 'd':
-				printDec(va_arg(args, int));
-				format += 2;
-			break;
-			case 'x':
-				printHex(va_arg(args, int));
-				format += 2;
-			break;
-			case 'b':
-				printBin(va_arg(args, int));
-				format += 2;
-			break;
-			case 'c':
-				putc(va_arg(args, int));
-				format += 2;
-			break;
-			case 's':
-				puts(va_arg(args, char *));
-				format += 2;
-			break;
-			default: putc(*format++); break;
-			}
-		break;
-		default: putc(*format++); break;
-		}
-	}
-	*/
-	
 	va_end(args);
 }
+
+
+
+
+
+
+
 
 
 

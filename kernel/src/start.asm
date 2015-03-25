@@ -16,7 +16,7 @@ start:
 	mov ebp, esp
 	
 	;enable FPU
-	FNINIT
+	;FNINIT
 	
 	;map kernel to higher half
 	
@@ -45,8 +45,9 @@ start:
 	;push memory map
 	push edx
 	
-	;call kernel, never return
-	call _kernel_main	
+	;call kernel indirectly, never return
+	mov eax, _kernel_main
+	call eax
 	
 	
 	

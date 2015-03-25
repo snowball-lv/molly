@@ -5,6 +5,9 @@
 uint32_t read_ebp();
 uint32_t read_esp();
 uint32_t read_eip();
+uint32_t read_cr2();
+uint32_t read_ret();
+void invlpg();
 
 void halt();
 void stop();
