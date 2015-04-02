@@ -7,6 +7,9 @@
 #include <thread.h>
 #include <scheduler.h>
 #include <console.h>
+#include <molly.h>
+#include <param.h>
+#include <gdt.h>
 
 static proc_t 	_null_proc;
 static thread_t _null_thread;
@@ -107,7 +110,59 @@ void create_process(int (*entry)()) {
 	schedule_process(p);
 }
 
-proc_table_t proc_table;
+//v 2
+
+#define MAX_PROCS	(16)
+
+static xproc_t procs[MAX_PROCS];
+
+xproc_t *cproc() {
+	return &procs[0];
+}
+
+#define _4MB		(4 * 1024 * 1024)
+
+extern pd_t init_pd;
+void user_main();
+
+#define PUSH(v)	(ksp--, *ksp = (int)(v))
+
+void user_jump(void *ksp);
+
+void tss_set(int ss0, void *esp0);
+
+void proc_swtch_usr() {
+
+	xproc_t *p = &procs[0];
+	
+	p->pd = &init_pd;
+	p->brk = (void *)_4MB;
+
+	int *ustack = sbrk(4096);
+	int *usp = ustack + 1024;
+	kprintfln("ustack: %x", ustack);
+	kprintfln("usp: %x", usp);
+	
+	int *kstack = kmalloc(4096);
+	int *ksp = kstack + 1024;
+	tss_set(0x10, ksp);
+	kprintfln("kstack: %x", kstack);
+	kprintfln("ksp: %x", ksp);
+	
+	kprintfln("user_main: %x", user_main);
+	
+	PUSH(0x20 | 0x3);				//ss
+	PUSH(usp);						//esp
+	PUSH(read_flags());				//eflags
+	PUSH(0x18 | 0x3);				//cs
+	PUSH(user_main - KERNEL_OFF);	//eip
+	
+	user_jump(ksp);
+}
+
+
+
+
 
 
 

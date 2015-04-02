@@ -43,6 +43,17 @@ void map_pte(pt_t *pt, size_t index, void *phys);
 
 void *virt_to_phys(void *virt);
 
+//v 2
+
+void invlpg();
+
+void map_page(void *virt, void *phys, int flags);
+
+
+
+
+
+
 
 
 

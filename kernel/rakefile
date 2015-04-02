@@ -16,6 +16,7 @@ file "bin/kernel.bin" => "bin/kernel.exe" do
 			"-j .text " \
 			"-j .rdata " \
 			"-j .data " \
+			"-j .ramfs " \
 			"-j .bss " \
 			"kernel.exe kernel.bin"
 	end

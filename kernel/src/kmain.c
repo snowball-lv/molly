@@ -72,7 +72,7 @@ void kmain(MemMap *mm) {
 	init_paging();
 	
 	//init kernel heap allocator
-	init_kernel_allocator();
+	init_kalloc();
 	
 	//init process and thread switching
 	init_scheduler();

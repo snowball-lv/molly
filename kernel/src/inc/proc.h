@@ -27,29 +27,25 @@ proc_t *get_null_proc();
 
 void create_process(int (*entry)());
 
-typedef struct {
+//v 2
 
-} thread_t_2;
-
-#define MAX_THREADS	(64)
+void proc_swtch_usr();
 
 typedef struct {
-	thread_t_2 threads[MAX_THREADS];
-} proc_t_2;
+	int *ustack;
+	int *usp;
+	int (*entry)();
+} xthread_t;
 
-#define MAX_PROCS	(64)
+#define MAX_THREADS		(16)
 
 typedef struct {
-	proc_t_2 procs[MAX_PROCS];
-} proc_table_t;
+	pd_t		*pd;
+	void 		*brk;
+	xthread_t 	threads[MAX_THREADS];
+} xproc_t;
 
-
-
-
-
-
-
-
+xproc_t *cproc();
 
 
 

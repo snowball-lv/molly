@@ -2,12 +2,15 @@
 
 #include <stdint.h>
 
+#define ALIGN_RIGHT(v, a)	\
+	(((v) + (a) - 1) & ~((a) - 1))
+
 uint32_t read_ebp();
 uint32_t read_esp();
 uint32_t read_eip();
 uint32_t read_cr2();
 uint32_t read_ret();
-void invlpg();
+uint32_t read_flags();
 
 void halt();
 void stop();
@@ -26,8 +29,6 @@ void enable_ints();
 void disable_ints();
 
 const char *kstrchr(const char *str, int character);
-
-
 
 #define NAME(m) #m		
 		

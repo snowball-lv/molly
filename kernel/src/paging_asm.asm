@@ -22,7 +22,12 @@ _enable_paging:
 	mov cr0, eax
 	ret
 	
-		
+;void invlpg();
+global _invlpg
+_invlpg:
+	mov eax, cr3
+	mov cr3, eax
+	ret
 	
 	
 	

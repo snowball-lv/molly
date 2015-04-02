@@ -16,6 +16,11 @@ SECTIONS
 		*(.data)
 	}
 	
+	.ramfs : ALIGN(0x1000) {	
+		__RAMFS_START = .;
+		"../ramfs/ramfs_img.o"
+	}
+	
 	.bss : ALIGN(0x1000) { 	
 		__BSS_START = .;				
 		*(.bss)

@@ -37,7 +37,7 @@ static void idt_set_gate(size_t num, uint32_t isr) {
 	desc->addr_low 	= isr & 0xffff;
 	desc->selector 	= CODE_SEL;
 	desc->zero 		= 0;
-	desc->flags 	= 0b10001110;
+	desc->flags 	= 0b11101110;
 	desc->addr_high = (isr >> 16) & 0xffff;
 }
 
@@ -52,8 +52,37 @@ static void idt_set_gate(size_t num, uint32_t isr) {
 static void pf_handler(trapframe_t *tf) {
 
 	kprintfln("*** %x", read_cr2());
+	
+	kprintfln("- %s", tf->err_code & (1 << 0) ? 
+		"caused by a protection violation" :
+		"caused by a non-present page");
+	
+	kprintfln("- %s", tf->err_code & (1 << 1) ? 
+		"write access caused the fault" :
+		"read access caused the fault");
+	
+	kprintfln("- %s", tf->err_code & (1 << 2) ? 
+		"the fault occurred in user mode" :
+		"the fault occurred in supervisor  mode");
+	
+	kprintfln("- %s", tf->err_code & (1 << 3) ? 
+		"one or more page directory entries contain reserved bits which are set to 1" :
+		"This only applies when the PSE or PAE flags in CR4 are set to 1");
+	
+	kprintfln("- %s", tf->err_code & (1 << 4) ? 
+		"the fault was caused by an instruction fetch" :
+		"This only applies when the No-Execute bit is supported and enabled");
+	
 	panic("*** page fault");
 }
+
+static void gpf_handler(trapframe_t *tf) {
+	kprintfln("*** eip: %x", tf->eip);
+	kprintfln("*** seg: %x", tf->err_code);
+	panic("*** General Protection Fault");
+}
+
+#define I_GP_FAULT 		(13)
 
 void init_idt() {
 		
@@ -66,6 +95,7 @@ void init_idt() {
 	lidt(&_idtr);
 	
 	isr_set_handler(I_PAGE_FAULT, pf_handler);
+	isr_set_handler(I_GP_FAULT, gpf_handler);
 }
 
 

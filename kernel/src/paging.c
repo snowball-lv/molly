@@ -41,6 +41,9 @@ static void alloc_page(size_t index) {
 		map_pde(pd, PAGE_PDE(index), page_table);
 	}
 	
+	if (*pde & PTE_PS)
+		return;
+	
 	pt_t *pt = (pt_t *)(0xffc00000 + PAGE_SIZE * PAGE_PDE(index));
 	pte_t *pte = &pt->entries[PAGE_PTE(index)];
 	
@@ -128,7 +131,31 @@ void *virt_to_phys(void *virt) {
 	return (void *)(*pte & PAGE_MASK);
 }
 
+//v 2
+	
+#define PDEI(a)		(((uintptr_t)(a) >> 22) & 0x3ff)
+#define PTEI(a)		(((uintptr_t)(a) >> 12) & 0x3ff)
+	
+void map_page(void *virt, void *phys, int flags) {
 
+	pd_t *pd = (pd_t *)0xfffff000;
+	pde_t *pde = &pd->entries[PDEI(virt)];
+	
+	if (*pde == 0) {
+		kprintfln("allocating new page table");
+		void *table = pmm_alloc_page();
+		memset(table, 0, PAGE_SIZE);
+		*pde = PTE_P | PTE_RW | PTE_U | (uintptr_t)table;
+	}
+
+	pt_t *pt = (pt_t *)(0xffc00000 + PAGE_SIZE * PDEI(virt));
+	pte_t *pte = &pt->entries[PTEI(virt)];
+	
+	if (*pte == 0) {
+		kprintfln("mapping %x to %x", virt, phys);
+		*pte = (uintptr_t)phys | flags;
+	}
+}
 
 
 

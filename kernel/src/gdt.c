@@ -141,6 +141,11 @@ static char kstack[4096];
 //gdt_asm.asm
 void tss_flush();
 
+void tss_set(int ss0, void *esp0) {
+	tss_entry.ss0 = ss0;
+	tss_entry.esp0 = (uintptr_t)esp0;
+}
+
 void init_gdt() {
 	
 	lgdt(&gdtr);
@@ -164,7 +169,6 @@ void init_gdt() {
 	tss_entry.esp0 	= (uintptr_t)&kstack[4095];
 	
 	tss_flush();
-	
 }
 
 

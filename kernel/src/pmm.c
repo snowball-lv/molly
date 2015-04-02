@@ -63,6 +63,10 @@ void *pmm_alloc_block() {
 	return 0;
 }
 
+void *pmm_alloc_page() {
+	return pmm_alloc_block();
+}
+
 void pmm_free_block(void *ptr) {
 
 	ASSERT_PAGE_ALIGNED((uintptr_t)ptr);

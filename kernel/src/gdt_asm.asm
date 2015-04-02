@@ -33,16 +33,14 @@ _tss_flush:
 
 	ret
 	
+%define KERNEL_OFF		(0xc0000000)
+extern _user_main
+
 ;void user_mode();
 global _user_mode
 _user_mode:
 	push ebp
 	mov ebp, esp
-	
-	
-	
-	pop ebp
-	ret
 
 	mov ax, 0x20 | 0x3
 	mov ds, ax

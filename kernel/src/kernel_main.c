@@ -8,6 +8,9 @@
 #include <molly.h>
 #include <idt.h>
 #include <syscall.h>
+#include <pci.h>
+#include <kalloc.h>
+#include <proc.h>
 
 #define PDE_SHIFT 		(22)
 
@@ -15,7 +18,7 @@ __attribute__((aligned(PAGE_SIZE)))
 pd_t init_pd = {
 	.entries = {
 		[0]
-			= (0) | PTE_P | PTE_RW | PTE_PS,
+			= (0) | PTE_P | PTE_RW | PTE_PS | PTE_U,
 		[KERNEL_BASE >> PDE_SHIFT]
 			= (0) | PTE_P | PTE_RW | PTE_PS
 	}
@@ -66,22 +69,40 @@ void kernel_main(MemMap *mm) {
 	kprintfln("kernel size: %d kb", kend_phys / 1024);
 	pmm_set_blocks(0, kend_phys / PAGE_SIZE);
 	
+	//add recursive mapping (necessary for kalloc)
+	pde_t *last = &init_pd.entries[1023];
+	*last = (uintptr_t)&init_pd - KERNEL_OFF;
+	*last |= PTE_P | PTE_RW;
+	invlpg();
+	
+	//init kernel heap allocator
+	init_kalloc();
+	
 	//set up idt and interrupt handlers
 	init_idt();
 	
-	//remove lower mapping
-	init_pd.entries[0] = 0;
-	invlpg();
-	
-	//enable system calls
+	//set up syscalls
 	init_syscall();
 	
-	//user_mode();
+	//switch to user mode
+	proc_swtch_usr();
 	
-	kprintfln("init error");
+	kprintfln("booted");
 	
 	while(1);
 }
+
+void user_main() {
+
+	//kprintfln("in user main");
+	log("in user main");
+	
+	while(1);
+}
+
+
+
+
 
 
 

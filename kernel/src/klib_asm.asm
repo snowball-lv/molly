@@ -20,13 +20,6 @@ _read_eip:
 	pop eax
 	jmp eax
 	
-;void invlpg();
-global _invlpg
-_invlpg:
-	mov eax, cr3
-	mov cr3, eax
-	ret
-	
 ;uint32_t read_cr2();
 global _read_cr2
 _read_cr2:
@@ -37,6 +30,14 @@ _read_cr2:
 global _read_ret
 _read_ret:
 	mov eax, [ebp + 4]
+	ret
+	
+;uint32_t read_flags();
+global _read_flags
+_read_flags:
+	pushf
+	mov eax, [esp]
+	add esp, 4
 	ret
 	
 	

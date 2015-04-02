@@ -1,9 +1,9 @@
 #include <pci.h>
 
 #include <stdint.h>
-#include <kalloc.h>
 #include <io.h>
 #include <console.h>
+#include <string.h>
 #include <pci_list.h>
 
 #define CONFIG_ADDRESS		(0xCF8)
@@ -74,12 +74,12 @@ static void dump_device(uint16_t vendor_id, uint16_t device_id) {
 	for (size_t i = 0; i < PCI_DEVTABLE_LEN; i++) {
 		PCI_DEVTABLE *d = &PciDevTable[i];
 		if (d->VenId == vendor_id && d->DevId == device_id) {
-			kprintfln("- %s", d->ChipDesc);
+			kprintf("- %s / ", d->ChipDesc);
 			return;
 		}
 	}
 	
-	kprintfln("- device info not available.");
+	kprintf("- unknown / ");
 }
 
 static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
@@ -96,7 +96,7 @@ static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
 				c->SubClass == subclass &&
 				c->ProgIf == prog_if)
 		{
-			kprintfln(	"-- %s | %s | %s",
+			kprintfln(	"%s | %s | %s",
 						c->BaseDesc,
 						c->SubDesc,
 						c->ProgDesc);
@@ -104,7 +104,7 @@ static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
 		}
 	}
 	
-	kprintfln("-- class info not available.");
+	kprintfln("unknown.");
 }
 
 static void scan_function(uint8_t bus, uint8_t dev, uint8_t fun) {
@@ -122,7 +122,7 @@ static void scan_function(uint8_t bus, uint8_t dev, uint8_t fun) {
 	
 	if (class_code == 0x6 && subclass_code == 0x4) {
 		//bridge
-		kprintfln("bridge function");
+		kprintfln("! bridge function");
 		uint8_t sbus = pci_secondary_bus(bus, dev, fun);
 		scan_bus(sbus);
 	}
@@ -138,7 +138,7 @@ static void dump_vendor(uint16_t vendor_id) {
 		}
 	}
 	
-	kprintfln("vendor info not available.");
+	kprintfln("unknown");
 }
 
 static void scan_device(uint8_t bus, uint8_t dev) {
@@ -163,6 +163,8 @@ static void scan_device(uint8_t bus, uint8_t dev) {
 			}
 		}
 	}
+	
+	kprintfln("");
 }
 
 static void scan_bus(uint8_t bus) {
@@ -178,10 +180,12 @@ static void scan_all_buses() {
 	if ((header_type & 0x80) == 0) {
 		//single host controller
 		kprintfln("single host controller");
+		kprintfln("");
 		scan_bus(0);
 	} else {
 		//multiple host controllers
 		kprintfln("multiple host controllers");
+		kprintfln("");
 		for (int i = 0; i < 8; i++) {
 			if (pci_vendor_id(0, 0, i) != 0xffff) {
 				scan_bus(i);
