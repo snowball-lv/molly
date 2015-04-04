@@ -4,69 +4,54 @@
 #include <stdint.h>
 #include <console.h>
 #include <paging.h>
-
-#define PAGE_ALIGN_RIGHT(v)	\
-	(ALIGN_RIGHT((v), PAGE_SIZE))
-
-#define ALIGN_RIGHT(v, a)	\
-	(((v) + (a) - 1) & ~((a) - 1))
-
-#define MEM_ALIGN_RIGHT(v)	\
-	(ALIGN_RIGHT((v), MEM_ALIGNMENT))
+#include <pmm.h>
 
 extern none_t _HEAP_START;
 
-static uintptr_t _heap_base;
-static uintptr_t _heap_top;
+static void *kheap_base;
+static void *kheap_top;
 
 void init_kalloc() {
-	
-	_heap_base 	= (uintptr_t)&_HEAP_START;
-	_heap_top 	= _heap_base;
-}
 
-static void *kmalloc_custom(size_t size, size_t alignment) {
-	
-	//kprintfln("kmalloc: %d, %d", size, alignment);
-	
-	if (size == 0)
-		return 0;
-		
-	uintptr_t brk = _heap_top;
-	
-	size_t first = PAGE_ALIGN_RIGHT(brk) / PAGE_SIZE;
-	
-	//kprintfln("first: %d", first);
-	
-	uintptr_t mem = ALIGN_RIGHT(brk, alignment);
-	uintptr_t new_brk = mem + size;
-	new_brk = MEM_ALIGN_RIGHT(new_brk);
-	
-	size_t old_page = PAGE_ALIGN_RIGHT(brk) / PAGE_SIZE;
-	size_t new_page = PAGE_ALIGN_RIGHT(new_brk) / PAGE_SIZE;
-	size_t count = new_page - old_page;
-	
-	//kprintfln("count: %d", count);
-	
-	//kprintfln("kmalloc: [%d, %d) ", first, first + count);
-	
-	alloc_pages(first, count);
-	
-	_heap_top = new_brk;
-	
-	return (void *)mem;
+	kheap_base 	= &_HEAP_START;
+	kheap_top 	= kheap_base;
 }
 
 void *kmalloc_page() {
-	return kmalloc_custom(PAGE_SIZE, PAGE_SIZE);
+
+	char *cbrk = (void *)kheap_top;
+	void *phys = pmm_alloc_block();
+	map_page(cbrk, phys, PTE_P | PTE_RW);
+	
+	kheap_top = cbrk + PAGE_SIZE;
+	
+	return cbrk;
 }
 
+#define ROUND_UP(v, a)	(((v) + (a) - 1) & ~((a) - 1))
+
 void *kmalloc(size_t size) {
-	return kmalloc_custom(size, MEM_ALIGNMENT);
+
+	if (size == 0)
+		return 0;
+
+	char *cbrk = (void *)kheap_top;
+	void *ret = cbrk;
+	char *nbrk = cbrk + size;
+	nbrk = (char *)ROUND_UP((uintptr_t)nbrk, PAGE_SIZE);
+	
+	for (;cbrk < nbrk; cbrk += PAGE_SIZE) {
+		void *phys = pmm_alloc_block();
+		map_page(cbrk, phys, PTE_P | PTE_RW);
+	}
+		
+	kheap_top = cbrk;
+	
+	return ret;
 }
 
 void kfree(void *ptr) {
-	//kprintfln("kfree: %x", ptr);
+	kprintfln("kfree: %x", ptr);
 }
 
 

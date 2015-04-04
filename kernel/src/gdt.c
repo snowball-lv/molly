@@ -1,7 +1,6 @@
 #include <gdt.h>
 #include <console.h>
-#include <klib.h>
-#include <string.h>
+#include <stdint.h>
 
 #define ATTR __attribute__((packed))
 
@@ -28,10 +27,13 @@ typedef struct {
 
 	// The previous TSS - if we used hardware task switching this would form a linked list.
 	uint32_t prev_tss;
+	
 	//The stack pointer to load when we change to kernel mode.
 	uint32_t esp0;
+	
 	//The stack segment to load when we change to kernel mode.
 	uint32_t ss0;
+	
 	//everything below here is unusued now.. 
 	
 	uint32_t esp1;
@@ -61,10 +63,12 @@ typedef struct {
 	
 } ATTR tss_entry_t;
 
-_Static_assert(sizeof(tss_entry_t) == 104, "tss_entry_t size not 104");
+_Static_assert(
+	sizeof(tss_entry_t) == 104,
+	"tss_entry_t size not 104");
 
-#define FLAG_32_BIT			(0b0100)
-#define FLAG_4K_GRAN		(0b1000)
+#define F_32_BIT		(0b0100)
+#define F_4K_GRAN		(0b1000)
 
 //gdt_asm.asm
 void lgdt(GDTR *gdtr);
@@ -91,7 +95,7 @@ static GDTDesc gdt[MAX_DESCRIPTORS] = {
 		.limit_low 	= 0xffff,
 		.limit_high = 0xf,
 		.access		= 0b10011010,
-		.flags		= FLAG_32_BIT | FLAG_4K_GRAN
+		.flags		= F_32_BIT | F_4K_GRAN
 	}, {
 		//flat kernel data descriptor
 		.base_low 	= 0,
@@ -100,7 +104,7 @@ static GDTDesc gdt[MAX_DESCRIPTORS] = {
 		.limit_low 	= 0xffff,
 		.limit_high = 0xf,
 		.access		= 0b10010010,
-		.flags		= FLAG_32_BIT | FLAG_4K_GRAN
+		.flags		= F_32_BIT | F_4K_GRAN
 	}, {
 		//flat user code descriptor
 		.base_low 	= 0,
@@ -109,7 +113,7 @@ static GDTDesc gdt[MAX_DESCRIPTORS] = {
 		.limit_low 	= 0xffff,
 		.limit_high = 0xf,
 		.access		= 0b11111010,
-		.flags		= FLAG_32_BIT | FLAG_4K_GRAN
+		.flags		= F_32_BIT | F_4K_GRAN
 	}, {
 		//flat user data descriptor
 		.base_low 	= 0,
@@ -118,7 +122,7 @@ static GDTDesc gdt[MAX_DESCRIPTORS] = {
 		.limit_low 	= 0xffff,
 		.limit_high = 0xf,
 		.access		= 0b11110010,
-		.flags		= FLAG_32_BIT | FLAG_4K_GRAN
+		.flags		= F_32_BIT | F_4K_GRAN
 	}, {
 		//tss (set up in init)
 		.base_low 	= 0,
@@ -136,13 +140,10 @@ static GDTR gdtr = {
 	.addr = (uint32_t)&gdt
 };
 
-static char kstack[4096];
-
 //gdt_asm.asm
 void tss_flush();
 
-void tss_set(int ss0, void *esp0) {
-	tss_entry.ss0 = ss0;
+void set_tss(void *esp0) {
 	tss_entry.esp0 = (uintptr_t)esp0;
 }
 
@@ -165,8 +166,7 @@ void init_gdt() {
 	tssd->access 	= 0b11101001;
 	tssd->flags 	= 0b0000;
 	
-	tss_entry.ss0 	= 0x10;
-	tss_entry.esp0 	= (uintptr_t)&kstack[4095];
+	tss_entry.ss0 = 0x10;
 	
 	tss_flush();
 }

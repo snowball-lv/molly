@@ -1,7 +1,6 @@
 #include <pmm.h>
 
 #include <console.h>
-#include <klib.h>
 #include <paging.h>
 
 typedef int	entry_t;
@@ -63,32 +62,12 @@ void *pmm_alloc_block() {
 	return 0;
 }
 
-void *pmm_alloc_page() {
-	return pmm_alloc_block();
-}
-
 void pmm_free_block(void *ptr) {
 
 	ASSERT_PAGE_ALIGNED((uintptr_t)ptr);
 	
 	size_t block = (uintptr_t)ptr / BLOCK_SIZE;
 	pmm_unset(block);
-}
-
-void pmm_info() {
-
-	size_t free = 0;
-	
-	for (size_t i = 0; i < BLOCKS; i++) {
-		if (!pmm_test(i))
-			free++;
-	}
-	
-	free *= PAGE_SIZE;
-	free /= 1024; //kb
-	free /= 1024; //mb
-	
-	kprintfln("free mb: %d", free);
 }
 
 

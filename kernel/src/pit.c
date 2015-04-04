@@ -3,9 +3,8 @@
 #include <pic.h>
 #include <console.h>
 #include <klib.h>
-#include <interrupt.h>
 #include <string.h>
-#include <scheduler.h>
+#include <idt.h>
 
 #define PIT_HZ			1193182
 #define COUNTER_0 		0x40
@@ -13,15 +12,14 @@
 #define COUNTER_2 		0x42
 #define COMMAND_WORD	0x43
 
-static clock_t _pit_ticks;
+static clock_t PIT_TICKS;
 
 clock_t pit_get_ticks() {
-	return _pit_ticks;
+	return PIT_TICKS;
 }
 
 static void tick_isr(trapframe_t *tf) {
-	_pit_ticks++;
-	reschedule();
+	PIT_TICKS++;
 }
 
 void init_pit() {
@@ -38,14 +36,11 @@ void init_pit() {
 	out8(COUNTER_0, (count >> 8) & 0xff);
 	
 	//set timer isr
-	isr_set_handler(32, tick_isr);
-	
-	//initialize ticks
-	_pit_ticks = 0;
+	set_isr(32, tick_isr);
 	
 	//enable timer
 	uint8_t mask = pic_read_data(PIC_MASTER);
-	mask &= ~(1 << PIC_IRQ_TIMER);
+	mask &= ~(1 << IRQ_TIMER);
 	pic_write_data(PIC_MASTER, mask);
 }
 

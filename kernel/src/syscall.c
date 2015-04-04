@@ -8,28 +8,27 @@
 #include <molly.h>
 #include <paging.h>
 #include <pmm.h>
+#include <idt.h>
+#include <gdt.h>
+#include <param.h>
 
-void sys_open(trapframe_t *tf);
-void sys_read(trapframe_t *tf);
-void sys_write(trapframe_t *tf);
-void sys_close(trapframe_t *tf);
-
-void sys_log(trapframe_t *tf);
-
-void sys_sbrk(trapframe_t *tf);
+static void sys_log		(trapframe_t *tf);
+static void sys_sbrk	(trapframe_t *tf);
+static void sys_mkt		(trapframe_t *tf);
+static void sys_yield	(trapframe_t *tf);
+static void sys_fork	(trapframe_t *tf);
+static void sys_yieldp	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
 	switch (tf->eax) {
 	
-		case SYS_OPEN: 		sys_open(tf); 	break;
-		case SYS_READ: 		sys_read(tf); 	break;
-		case SYS_WRITE: 	sys_write(tf); 	break;
-		case SYS_CLOSE: 	sys_close(tf); 	break;
-		
 		case SYS_LOG: 		sys_log(tf); 	break;
-		
 		case SYS_SBRK: 		sys_sbrk(tf); 	break;
+		case SYS_MKT: 		sys_mkt(tf); 	break;
+		case SYS_YIELD: 	sys_yield(tf); 	break;
+		case SYS_FORK: 		sys_fork(tf); 	break;
+		case SYS_YIELDP: 	sys_yieldp(tf); break;
 		
 		default:
 		kprintfln("unknown syscall");
@@ -40,7 +39,7 @@ static void syscall_handler(trapframe_t *tf) {
 #define I_SYSCALL	(0x80)
 
 void init_syscall() {
-	isr_set_handler(I_SYSCALL, syscall_handler);
+	set_isr(I_SYSCALL, syscall_handler);
 }
 
 static uint32_t *getbp(trapframe_t *tf) {
@@ -52,36 +51,14 @@ static uint32_t *getbp(trapframe_t *tf) {
 #define ARG(tf, num, type)	((type)*(getbp(tf) + 2 + (num)))
 #define RET(tf, value)		(tf->eax = (value))
 
-void sys_open(trapframe_t *tf) {
-
-	const char *path = ARG(tf, 0, const char *);
-	kprintfln("open: %s", path);
-}
-
-void sys_read(trapframe_t *tf) {
-	int count = ARG(tf, 2, int);
-	kprintfln("read: %d", count);
-}
-
-void sys_write(trapframe_t *tf) {
-	int count = ARG(tf, 2, int);
-	kprintfln("write: %d", count);
-}
-
-void sys_close(trapframe_t *tf) {
-
-	int fdi = ARG(tf, 0, int);
-	kprintfln("close: %d", fdi);
-}
-
-void sys_log(trapframe_t *tf) {
+static void sys_log(trapframe_t *tf) {
 	kprintfln("log: %s", ARG(tf, 0, const char *));
 }
 
-void sys_sbrk(trapframe_t *tf) {
+static void sys_sbrk(trapframe_t *tf) {
 	int size = ARG(tf, 0, int);
 	
-	xproc_t *p = cproc();
+	proc_t *p = cproc();
 	char *cbrk = p->brk;
 	char *nbrk = cbrk + size;
 	
@@ -90,7 +67,7 @@ void sys_sbrk(trapframe_t *tf) {
 		RET(tf, (uintptr_t)cbrk);
 	
 		for (;cbrk < nbrk; cbrk += PAGE_SIZE) {
-			void *phys = pmm_alloc_page();
+			void *phys = pmm_alloc_block();
 			map_page(cbrk, phys, PTE_P | PTE_RW | PTE_U);
 		}
 		
@@ -103,6 +80,79 @@ void sys_sbrk(trapframe_t *tf) {
 	} else {
 		RET(tf, (uintptr_t)cbrk);
 	}
+}
+
+typedef int (*tmain_t)();
+
+static void sys_mkt(trapframe_t *tf) {
+	kprintfln("mkt");
+	
+	proc_t *p = cproc();
+	
+	thread_t *t = 0;
+	for (int i = 0; i < MAX_THREADS; i++) {
+		if (p->threads[i].state == S_FREE) {
+			t = &p->threads[i];
+			kprintfln("new thread id: %d", i);
+			RET(tf, i);
+			break;
+		}
+	}
+	
+	if (t == 0) {
+		RET(tf, -1);
+		return;
+	}
+	
+	tmain_t tmain = ARG(tf, 0, tmain_t);
+	set_up_thread(t, tmain);
+}
+
+static void sys_yield(trapframe_t *tf) {
+	kprintfln("yield");
+	
+	proc_t *p 		= cproc();
+	thread_t *ct 	= &p->threads[p->ct_num];
+	thread_t *nt 	= 0;
+	
+	kprintfln("from: %d", p->ct_num);
+	
+	for (int i = 1; i < MAX_THREADS; i++) {
+		int mi = (p->ct_num + i) % MAX_THREADS;
+		if (p->threads[mi].state == S_USED) {
+			nt = &p->threads[mi];
+			p->ct_num = mi;
+			break;
+		}
+	}
+	
+	if (nt == 0)
+		return;
+		
+	kprintfln("to: %d", p->ct_num);
+	
+	set_tss(nt->ktop);
+	switch_context((void **)&ct->ksp, nt->ksp);
+}
+
+int proc_clone();
+
+static void sys_fork(trapframe_t *tf) {
+	kprintfln("fork");
+
+	int num = proc_clone();
+	
+	kprintfln("new proc: %d", num);
+}
+
+void *vtp(void *virt);
+
+static void sys_yieldp(trapframe_t *tf) {
+	kprintfln("yield proc");
+	
+	proc_t *cp = cproc();
+	kprintfln("%x", KERNEL_OFF);
+	kprintfln("%x", KERNEL_BASE);
 }
 
 

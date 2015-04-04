@@ -2,23 +2,19 @@
 
 #include <string.h>
 
-#define SYS_OPEN		(1)
-#define SYS_READ		(2)
-#define SYS_WRITE		(3)
-#define SYS_CLOSE		(4)
+#define SYS_LOG			(1)
+#define SYS_SBRK		(2)
+#define SYS_MKT			(3)
+#define SYS_YIELD		(4)
+#define SYS_FORK		(5)
+#define SYS_YIELDP		(6)
 
-#define SYS_LOG			(6)
-
-#define SYS_SBRK		(7)
-
-int open(const char *name);
-int read(int fd, void *buf, int count);
-int write(int fd, void *buf, int count);
-int close(int fd);
-
-void log(const char *msg);
-
-void *sbrk(int size);
+void 	log		(const char *msg);
+void 	*sbrk	(int size);
+int 	mkt		(int (*entry)());
+void	yield	();
+int		fork	();
+void	yieldp	();
 
 
 

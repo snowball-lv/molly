@@ -12,21 +12,12 @@
 #include <kalloc.h>
 #include <proc.h>
 
-#define PDE_SHIFT 		(22)
-
-__attribute__((aligned(PAGE_SIZE)))
-pd_t init_pd = {
-	.entries = {
-		[0]
-			= (0) | PTE_P | PTE_RW | PTE_PS | PTE_U,
-		[KERNEL_BASE >> PDE_SHIFT]
-			= (0) | PTE_P | PTE_RW | PTE_PS
-	}
-};
-
 extern none_t _BSS_START;
 extern none_t _BSS_END;
 extern none_t _KERNEL_END;
+extern pd_t init_pd;
+
+#define _4MB		(4 * 1024 * 1024)
 
 //paging enabled
 void kernel_main(MemMap *mm) {
@@ -67,7 +58,10 @@ void kernel_main(MemMap *mm) {
 	//alloc 1M + kernel (esp at 0x7ffff)
 	uintptr_t kend_phys = (uintptr_t)&_KERNEL_END - KERNEL_BASE;
 	kprintfln("kernel size: %d kb", kend_phys / 1024);
-	pmm_set_blocks(0, kend_phys / PAGE_SIZE);
+	//pmm_set_blocks(0, kend_phys / PAGE_SIZE);
+	
+	//alloc 4mb
+	pmm_set_blocks(0, _4MB / PAGE_SIZE);
 	
 	//add recursive mapping (necessary for kalloc)
 	pde_t *last = &init_pd.entries[1023];
@@ -85,17 +79,34 @@ void kernel_main(MemMap *mm) {
 	init_syscall();
 	
 	//switch to user mode
-	proc_swtch_usr();
+	user_mode();
 	
 	kprintfln("booted");
 	
 	while(1);
 }
 
+int thread() {
+	log("in a new thread");
+	yield();
+	while(1);
+	return 1337;
+}
+
 void user_main() {
 
 	//kprintfln("in user main");
 	log("in user main");
+	mkt(thread);
+	yield();
+	log("back in user-main");
+	
+	if (fork() != 0) {
+		log("in parent proc");
+		yieldp();
+	} else {
+		log("in child proc");
+	}
 	
 	while(1);
 }

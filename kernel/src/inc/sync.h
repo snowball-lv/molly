@@ -2,9 +2,8 @@
 
 typedef struct {
 	int state;
-} mutex_t;
+} spinlock_t;
 
-void mutex_init(mutex_t *m);
-
-void mutex_lock(mutex_t *m);
-void mutex_release(mutex_t *m);
+void spinlock_init		(spinlock_t *s);
+void spinlock_lock		(spinlock_t *s);
+void spinlock_unlock	(spinlock_t *s);

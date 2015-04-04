@@ -1,26 +1,20 @@
 
 
-
 section .text
 
-;int mutex_test(mutex_t *m);
-global _mutex_test
-_mutex_test:
+;int spinlock_xchg(int *state, int value);
+global _spinlock_xchg
+_spinlock_xchg:
 	push ebp
 	mov ebp, esp
-	
-	;lock state
-	mov eax, 0
-	
-	;save mutex state address
-	mov ecx, [ebp + 8]
+
+	mov ecx, [ebp + 8]	;*state
+	mov eax, [ebp + 12]	;value
 	
 	lock xchg eax, [ecx]
-
+	
 	pop ebp
 	ret
-	
-	
 	
 	
 	

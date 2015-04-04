@@ -1,51 +1,36 @@
 #pragma once
 
 #include <paging.h>
-#include <thread.h>
 
-#define PROC_STATE_NONE	 	(-1)
-#define PROC_STATE_RUNNING 	(1)
-#define PROC_STATE_DISPOSE	(2)
+void switch_context(void **old_sp, void *new_sp);
 
-typedef struct proc_t proc_t;
-
-struct proc_t {
-
-	pd_t 		*pd;
-	
-	thread_t	*current_thread;
-	thread_t	*thread_queue;
-	
-	int 		state;
-	
-	proc_t		*next;
-};
-
-void init_null_proc();
-
-proc_t *get_null_proc();
-
-void create_process(int (*entry)());
-
-//v 2
-
-void proc_swtch_usr();
+void user_mode();
 
 typedef struct {
+	int state;
 	int *ustack;
 	int *usp;
+	int *kstack;
+	int *ktop;
+	int *ksp;
 	int (*entry)();
-} xthread_t;
+} thread_t;
+
+void set_up_thread(thread_t *t, int (*entry)());
 
 #define MAX_THREADS		(16)
+#define S_FREE			(1)
+#define S_USED			(2)
 
 typedef struct {
+	int 		state;
 	pd_t		*pd;
 	void 		*brk;
-	xthread_t 	threads[MAX_THREADS];
-} xproc_t;
+	thread_t 	threads[MAX_THREADS];
+	int 		ct_num;
+} proc_t;
 
-xproc_t *cproc();
+proc_t *cproc();
 
 
 

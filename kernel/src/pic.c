@@ -28,8 +28,8 @@ void init_pic() {
 
 	//send Initialization Control Word 2
 	//IRQ base address (0 - 31 are reserved)
-	out8(MASTER_DATA, PIC_IRQ_BASE);
-	out8(SLAVE_DATA, PIC_IRQ_BASE + 8);
+	out8(MASTER_DATA, IRQ_BASE);
+	out8(SLAVE_DATA, IRQ_BASE + 8);
 	
 	//send Initialization Control Word 3
 	//cascading
