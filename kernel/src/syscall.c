@@ -150,9 +150,7 @@ void *vtp(void *virt);
 static void sys_yieldp(trapframe_t *tf) {
 	kprintfln("yield proc");
 	
-	proc_t *cp = cproc();
-	kprintfln("%x", KERNEL_OFF);
-	kprintfln("%x", KERNEL_BASE);
+	
 }
 
 

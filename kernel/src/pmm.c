@@ -64,8 +64,6 @@ void *pmm_alloc_block() {
 
 void pmm_free_block(void *ptr) {
 
-	ASSERT_PAGE_ALIGNED((uintptr_t)ptr);
-	
 	size_t block = (uintptr_t)ptr / BLOCK_SIZE;
 	pmm_unset(block);
 }

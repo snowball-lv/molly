@@ -100,44 +100,16 @@ void set_up_thread(thread_t *t, int (*entry)()) {
 		PUSH(0);
 }
 
-static pd_t *clone_pd() {
-
-	pd_t *pd = kmalloc_page();
-	memset(pd, 0, PAGE_SIZE);
-	
-	proc_t *cp = cproc();
-	
-	for (int i = 768; i < 1024; i++)
-		pd->entries[i] = cp->pd->entries[i];
-	
-	char *v = (char *)0x100000;
-	for (; v < (char *)cp->brk; v += PAGE_SIZE) {
-		void *page = pmm_alloc_block();
-		
-	}
-	
-	return pd;
-}
+pd_t *clone_pd();
+void load_PDBR(pd_t *pd);
+void *vtp(void *virt);
 
 int proc_clone() {
 
-	int num = -1;
-	for (int i = 0; i < MAX_PROCS; i++) {
-		if (procs[i].state == S_FREE) {
-			num = i;
-			break;
-		}
-	}
+	pd_t *pd = clone_pd();
+	load_PDBR(vtp(pd));
 	
-	if (num < 0)
-		return -1;
-		
-	pd_t *pd = kmalloc_page();
-	memset(pd, 0, PAGE_SIZE);
-		
-	
-		
-	return num;
+	return 1;
 }
 
 
