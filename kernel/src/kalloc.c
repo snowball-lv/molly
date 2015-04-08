@@ -5,15 +5,18 @@
 #include <console.h>
 #include <paging.h>
 #include <pmm.h>
+#include <param.h>
 
-extern none_t _HEAP_START;
+//extern none_t _HEAP_START;
 
 static void *kheap_base;
 static void *kheap_top;
 
+#define _4MB		(4 * 1024 * 1024)
+
 void init_kalloc() {
 
-	kheap_base 	= &_HEAP_START;
+	kheap_base 	= (void *)(KERNEL_OFF + _4MB);
 	kheap_top 	= kheap_base;
 }
 

@@ -26,8 +26,11 @@ typedef struct {
 _Static_assert(sizeof(pte_t) 	== 4, "pte_t size not 6");
 _Static_assert(sizeof(pde_t)	== 4, "pde_t size not 8");
 
-void invlpg();
 void map_page(void *virt, void *phys, int flags);
+
+//paging_asm.asm
+void invlpg(void *page);
+void reloadPDBR();
 
 
 

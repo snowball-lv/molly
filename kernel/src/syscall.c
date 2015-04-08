@@ -135,22 +135,34 @@ static void sys_yield(trapframe_t *tf) {
 	switch_context((void **)&ct->ksp, nt->ksp);
 }
 
-int proc_clone();
+int proc_clone(trapframe_t *tf);
 
 static void sys_fork(trapframe_t *tf) {
 	kprintfln("fork");
 
-	int num = proc_clone();
+	int num = proc_clone(tf);
 	
 	kprintfln("new proc: %d", num);
+	
+	RET(tf, num);
 }
 
 void *vtp(void *virt);
+proc_t *get_proc(size_t num);
+void load_PDBR(pd_t *pd);
 
 static void sys_yieldp(trapframe_t *tf) {
 	kprintfln("yield proc");
 	
+	proc_t *cp 		= cproc();
+	proc_t *np 		= get_proc(1);
+	thread_t *ct 	= &cp->threads[cp->ct_num];
+	thread_t *nt 	= &np->threads[np->ct_num];
 	
+	load_PDBR(vtp(np->pd));
+	
+	set_tss(nt->ktop);
+	switch_context((void **)&ct->ksp, nt->ksp);
 }
 
 

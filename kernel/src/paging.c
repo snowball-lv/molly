@@ -3,6 +3,7 @@
 #include <pmm.h>
 #include <kalloc.h>
 #include <proc.h>
+#include <molly.h>
 
 //paging_asm.asm
 void load_PDBR(pd_t *pd);
@@ -29,12 +30,9 @@ void map_page(void *virt, void *phys, int flags) {
 	pt_t *pt = (pt_t *)(0xffc00000 + PAGE_SIZE * PDEI(virt));
 	pte_t *pte = &pt->entries[PTEI(virt)];
 	
-	if (*pte != 0) {
-		kprintfln("remapping! deleting old frame.");
-		pmm_free_block((void *)_4KB_MASK(*pte));
-	}
-	
 	*pte = (uintptr_t)phys | flags;
+	
+	invlpg(virt);
 }
 
 #define _4MB_MASK(v)	((v) & 0xffc00000)
@@ -58,11 +56,58 @@ void *vtp(void *virt) {
 	return page + _4KB_OFF((uintptr_t)virt);
 }
 
+static void map_page2(void *virt, void *phys, int flags) {
+
+	pd_t *pd = (pd_t *)0xffffe000;
+	pde_t *pde = &pd->entries[PDEI(virt)];
+	
+	if (*pde == 0) {
+		kprintfln("allocating new page table - 2");
+		void *table = pmm_alloc_block();
+		*pde = PTE_P | PTE_RW | PTE_U | (uintptr_t)table;
+		pt_t *pt = (pt_t *)(0xff800000 + PAGE_SIZE * PDEI(virt));
+		memset(pt, 0, PAGE_SIZE);
+	}
+
+	pt_t *pt = (pt_t *)(0xff800000 + PAGE_SIZE * PDEI(virt));
+	pte_t *pte = &pt->entries[PTEI(virt)];
+	
+	*pte = (uintptr_t)phys | flags;
+}
+
 pd_t *clone_pd() {
+	
+	pd_t *npd = kmalloc_page();
+	memset(npd, 0, PAGE_SIZE);
 	
 	pd_t *cpd = (pd_t *)0xfffff000;
 	
-	return cpd;
+	for (int i = 768; i < 1024; i++)
+		npd->entries[i] = cpd->entries[i];
+		
+	pde_t *rec = &npd->entries[1023];
+	*rec = (uintptr_t)vtp(npd) | PTE_P | PTE_RW;
+		
+	pde_t *mp2 = &cpd->entries[1022];
+	*mp2 = (uintptr_t)vtp(npd) | PTE_P | PTE_RW;
+	
+	reloadPDBR();
+	
+	char *virt 	= (char *)0x0;
+	char *brk 	= cproc()->brk;
+	char *buff	= kmalloc_page();
+	
+	kprintfln("brk: %x ", brk);
+	kprintfln("pages: %d ", (uintptr_t)brk / PAGE_SIZE);
+	
+	for (;virt < brk; virt += PAGE_SIZE) {
+		void *phys = pmm_alloc_block();
+		map_page(buff, phys, PTE_P | PTE_RW | PTE_U);
+		memcpy(buff, virt, PAGE_SIZE);
+		map_page2(virt, phys, PTE_P | PTE_RW | PTE_U);
+	}
+	
+	return npd;
 }
 
 

@@ -22,6 +22,7 @@ char *strcpy(char *destination, const char *source) {
 		dst++;
 		source++;
 	}
+	*dst = 0;
 	return destination;
 }
 

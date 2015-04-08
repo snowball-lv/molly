@@ -67,7 +67,15 @@ void kernel_main(MemMap *mm) {
 	pde_t *last = &init_pd.entries[1023];
 	*last = (uintptr_t)&init_pd - KERNEL_OFF;
 	*last |= PTE_P | PTE_RW;
-	invlpg();
+	
+	//allocate kernel PDEs
+	for (int i = 768 + 1; i < 1023; i++) {
+		pde_t *pde = &init_pd.entries[i];
+		*pde = (uintptr_t)pmm_alloc_block();
+		*pde |= PTE_P | PTE_RW;
+	}
+	
+	reloadPDBR();
 	
 	//init kernel heap allocator
 	init_kalloc();
@@ -107,6 +115,8 @@ void user_main() {
 	} else {
 		log("in child proc");
 	}
+	
+	log("after fork");
 	
 	while(1);
 }

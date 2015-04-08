@@ -22,9 +22,19 @@ _enable_paging:
 	mov cr0, eax
 	ret
 	
-;void invlpg();
+;void invlpg(void *page)
 global _invlpg
 _invlpg:
+	push ebp
+	mov ebp, esp
+	mov eax, [ebp + 8]
+	invlpg [eax]
+	pop ebp
+	ret
+	
+;void reloadPDBR();
+global _reloadPDBR
+_reloadPDBR:
 	mov eax, cr3
 	mov cr3, eax
 	ret

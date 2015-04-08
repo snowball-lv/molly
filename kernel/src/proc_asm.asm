@@ -25,6 +25,12 @@ global _thread_entry
 _thread_entry:
 	iret
 	
+;void fork_child_ret();
+global _fork_child_ret
+_fork_child_ret:
+	mov eax, 0
+	iret
+	
 ;void switch_context(void **old_sp, void *new_sp);
 global _switch_context
 _switch_context:

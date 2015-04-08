@@ -8,6 +8,7 @@
 #include <molly.h>
 #include <param.h>
 #include <gdt.h>
+#include <idt.h>
 
 #define PDE_SHIFT 		(22)
 
@@ -25,6 +26,10 @@ pd_t init_pd = {
 
 static proc_t procs[MAX_PROCS];
 static int cp_num = 0;
+
+proc_t *get_proc(size_t num) {
+	return &procs[num];
+}
 
 proc_t *cproc() {
 	return &procs[cp_num];
@@ -62,7 +67,6 @@ void user_mode() {
 	t->ktop 	= t->kstack + 1024;
 	t->ksp 		= t->ktop;
 	t->entry 	= 0;
-	
 	
 	PUSH(0x20 | 0x3);				//ss
 	PUSH(t->usp);					//esp
@@ -103,11 +107,46 @@ void set_up_thread(thread_t *t, int (*entry)()) {
 pd_t *clone_pd();
 void load_PDBR(pd_t *pd);
 void *vtp(void *virt);
+void fork_child_ret();
 
-int proc_clone() {
+static void fork_zone() {
+	kprintfln("in fork zone");
+}
 
-	pd_t *pd = clone_pd();
-	load_PDBR(vtp(pd));
+int proc_clone(trapframe_t *tf) {
+
+	proc_t *np = &procs[1];
+	proc_t *cp = cproc();
+	
+	np->state 	= S_USED;
+	np->pd 		= clone_pd();
+	np->brk 	= cp->brk;
+	np->ct_num	= 0;
+	
+	for (int i = 0; i < MAX_THREADS; i++)
+		np->threads[i].state = S_FREE;
+		
+	thread_t *t = &np->threads[np->ct_num];
+	thread_t *ct = &cp->threads[cp->ct_num];
+	
+	t->state 	= S_USED;
+	t->ustack 	= ct->ustack;
+	t->usp 		= ct->usp;
+	t->kstack 	= kmalloc(4096);
+	t->ktop		= t->kstack + 1024;
+	t->ksp		= t->ktop;
+	t->entry	= 0;
+	
+	PUSH(0x20 | 0x3);			//ss
+	PUSH(*(&tf->eflags + 1));	//esp
+	PUSH(tf->eflags);			//eflags
+	PUSH(0x18 | 0x3);			//cs
+	PUSH(tf->eip);				//eip
+	
+	PUSH(fork_child_ret);
+	PUSH(read_flags());
+	for (int i = 0; i < 8; i++)
+		PUSH(0);
 	
 	return 1;
 }
