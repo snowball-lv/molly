@@ -109,10 +109,6 @@ void load_PDBR(pd_t *pd);
 void *vtp(void *virt);
 void fork_child_ret();
 
-static void fork_zone() {
-	kprintfln("in fork zone");
-}
-
 int proc_clone(trapframe_t *tf) {
 
 	proc_t *np = &procs[1];
@@ -137,11 +133,11 @@ int proc_clone(trapframe_t *tf) {
 	t->ksp		= t->ktop;
 	t->entry	= 0;
 	
-	PUSH(0x20 | 0x3);			//ss
-	PUSH(*(&tf->eflags + 1));	//esp
-	PUSH(tf->eflags);			//eflags
-	PUSH(0x18 | 0x3);			//cs
-	PUSH(tf->eip);				//eip
+	PUSH(0x20 | 0x3);		//ss
+	PUSH(tf->uesp);			//esp
+	PUSH(tf->eflags);		//eflags
+	PUSH(0x18 | 0x3);		//cs
+	PUSH(tf->eip);			//eip
 	
 	PUSH(fork_child_ret);
 	PUSH(read_flags());

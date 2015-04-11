@@ -11,18 +11,6 @@ void stop() {
 	__asm__("hlt");
 }
 
-clock_t clock() {
-	return pit_get_ticks();
-}
-
-void sleep(uintmax_t millis) {
-	clock_t now = clock();
-	float secs = (float)millis/1000.f;
-	clock_t target = now + secs * CLOCKS_PER_SEC;
-	while (clock() < target)
-		halt();
-}
-
 void panic(const char *msg) {
 	kprintfln(msg);
 	stop();

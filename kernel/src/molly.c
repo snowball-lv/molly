@@ -26,6 +26,9 @@ void yieldp() {
 	syscall_do(SYS_YIELDP);
 }
 
+void stall(unsigned ms) {
+	syscall_do(SYS_STALL, ms);
+}
 
 
 

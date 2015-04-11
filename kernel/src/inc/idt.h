@@ -23,6 +23,9 @@ typedef struct {
 	uint32_t cs;
 	uint32_t eflags;
 	
+	uint32_t uesp;
+	uint32_t uss;
+	
 } trapframe_t;
 
 typedef void (*isr_t)(trapframe_t *tf);

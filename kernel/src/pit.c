@@ -14,7 +14,7 @@
 
 static clock_t PIT_TICKS;
 
-clock_t pit_get_ticks() {
+clock_t ticks() {
 	return PIT_TICKS;
 }
 
@@ -27,7 +27,7 @@ void init_pit() {
 	//send control word
 	out8(COMMAND_WORD, 0b00110110);
 	
-	size_t count = PIT_HZ / (float)CLOCKS_PER_SEC;
+	size_t count = PIT_HZ / CLOCKS_PER_SEC;
 	
 	//LSB
 	out8(COUNTER_0, count & 0xff);
@@ -36,7 +36,7 @@ void init_pit() {
 	out8(COUNTER_0, (count >> 8) & 0xff);
 	
 	//set timer isr
-	set_isr(32, tick_isr);
+	set_isr(IRQ_BASE + IRQ_TIMER, tick_isr);
 	
 	//enable timer
 	uint8_t mask = pic_read_data(PIC_MASTER);

@@ -5,6 +5,7 @@
 #include <console.h>
 #include <string.h>
 #include <pci_list.h>
+#include <ide.h>
 
 #define CONFIG_ADDRESS		(0xCF8)
 #define CONFIG_DATA 		(0xCFC)
@@ -107,6 +108,29 @@ static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
 	kprintfln("unknown.");
 }
 
+#define C_IDE	0x1
+#define S_IDE	0x1
+
+static int bar0(int bus, int dev, int fun) {
+	return pci_conf_read(bus, dev, fun, 4);
+}
+
+static int bar1(int bus, int dev, int fun) {
+	return pci_conf_read(bus, dev, fun, 5);
+}
+
+static int bar2(int bus, int dev, int fun) {
+	return pci_conf_read(bus, dev, fun, 6);
+}
+
+static int bar3(int bus, int dev, int fun) {
+	return pci_conf_read(bus, dev, fun, 7);
+}
+
+static int bar4(int bus, int dev, int fun) {
+	return pci_conf_read(bus, dev, fun, 8);
+}
+
 static void scan_function(uint8_t bus, uint8_t dev, uint8_t fun) {
 	
 	uint16_t vendor_id = pci_vendor_id(bus, dev, fun);
@@ -119,6 +143,17 @@ static void scan_function(uint8_t bus, uint8_t dev, uint8_t fun) {
 	uint8_t prog_if = pci_prog_if(bus, dev, fun);
 	
 	dump_class(class_code, subclass_code, prog_if);
+
+	if (class_code == C_IDE && subclass_code == S_IDE) {
+	
+		int r0 = bar0(bus, dev, fun);
+		int r1 = bar1(bus, dev, fun);
+		int r2 = bar2(bus, dev, fun);
+		int r3 = bar3(bus, dev, fun);
+		int r4 = bar4(bus, dev, fun);
+		
+		init_ide(r0, r1, r2, r3, r4);
+	}
 	
 	if (class_code == 0x6 && subclass_code == 0x4) {
 		//bridge

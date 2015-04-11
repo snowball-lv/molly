@@ -11,6 +11,8 @@
 #include <pci.h>
 #include <kalloc.h>
 #include <proc.h>
+#include <pic.h>
+#include <pit.h>
 
 extern none_t _BSS_START;
 extern none_t _BSS_END;
@@ -83,11 +85,21 @@ void kernel_main(MemMap *mm) {
 	//set up idt and interrupt handlers
 	init_idt();
 	
+	//set up pic
+	init_pic();
+	
+	//set up pit
+	init_pit();
+	
 	//set up syscalls
 	init_syscall();
 	
+	enable_ints();
+	
+	//init_pci();
+	
 	//switch to user mode
-	user_mode();
+	//user_mode();
 	
 	kprintfln("booted");
 	

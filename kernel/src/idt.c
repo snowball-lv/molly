@@ -99,6 +99,10 @@ void init_idt() {
 	for (size_t i = 0; i < MAX_INTERRUPTS; i++)
 		idt_set_gate(i, (uint32_t)ISR_WRAPPERS[i]);
 	
+	//set syscall not to disable ints
+	IDTDesc *desc = &_idt[0x80];
+	desc->flags |= 0b1111;
+	
 	_idtr.size = sizeof(IDTDesc) * MAX_INTERRUPTS - 1;
 	_idtr.addr = (uint32_t)&_idt;
 	

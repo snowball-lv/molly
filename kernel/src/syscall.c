@@ -11,6 +11,7 @@
 #include <idt.h>
 #include <gdt.h>
 #include <param.h>
+#include <pit.h>
 
 static void sys_log		(trapframe_t *tf);
 static void sys_sbrk	(trapframe_t *tf);
@@ -18,6 +19,7 @@ static void sys_mkt		(trapframe_t *tf);
 static void sys_yield	(trapframe_t *tf);
 static void sys_fork	(trapframe_t *tf);
 static void sys_yieldp	(trapframe_t *tf);
+static void sys_stall	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
@@ -29,6 +31,7 @@ static void syscall_handler(trapframe_t *tf) {
 		case SYS_YIELD: 	sys_yield(tf); 	break;
 		case SYS_FORK: 		sys_fork(tf); 	break;
 		case SYS_YIELDP: 	sys_yieldp(tf); break;
+		case SYS_STALL: 	sys_stall(tf); 	break;
 		
 		default:
 		kprintfln("unknown syscall");
@@ -165,7 +168,21 @@ static void sys_yieldp(trapframe_t *tf) {
 	switch_context((void **)&ct->ksp, nt->ksp);
 }
 
-
+static void sys_stall(trapframe_t *tf) {
+	unsigned ms = ARG(tf, 0, unsigned);
+	
+	clock_t mspt = 1000 / CLOCKS_PER_SEC;
+	
+	clock_t min = mspt;
+	unsigned adj = ((ms + min - 1) / min) * min;
+	kprintfln("stall %d ms (%d)", ms, adj);
+	
+	clock_t now = ticks();
+	clock_t target = now + adj / mspt;
+	kprintfln("%d -> %d", now, target);
+	while (ticks() < target)
+		__asm__("hlt");
+}
 
 
 

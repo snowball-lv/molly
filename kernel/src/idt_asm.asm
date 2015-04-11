@@ -54,7 +54,7 @@ _isr_wrapper_common:
 	pushad
 	push esp
 	call _isr_common
-	add esp, 4 ;esp
+	add esp, 4 ;trapframe *
 	popad
 	add esp, 8 ;number and error code
 	iretd

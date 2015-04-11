@@ -4,4 +4,4 @@
 
 void init_pit();
 
-clock_t pit_get_ticks();
+clock_t ticks();
