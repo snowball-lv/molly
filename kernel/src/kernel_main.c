@@ -14,6 +14,12 @@
 #include <pic.h>
 #include <pit.h>
 
+//not used
+//leave for linking with molly's libc
+int main(int argc, char **argv) {
+	return 0;
+}
+
 extern none_t _BSS_START;
 extern none_t _BSS_END;
 extern none_t _KERNEL_END;
@@ -95,6 +101,14 @@ void kernel_main(MemMap *mm) {
 	init_syscall();
 	
 	enable_ints();
+	
+	char *args[] = {
+		"init.exe",
+		"-s",
+		0
+	};
+	
+	exec(args);
 	
 	//init_pci();
 	

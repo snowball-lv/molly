@@ -2,20 +2,39 @@
 
 task :default do
 
+	puts("BUILDING BOOT");
 	Dir.chdir("boot") do
 		ruby "-S", "rake"
 	end
 	
 	sh "lua fat16.lua"
 	
+	puts("BUILDING STAGE2");
 	Dir.chdir("stage2") do
 		ruby "-S", "rake"
 	end
 	
+	puts("BUILDING LIBC");
+	Dir.chdir("libc") do
+		ruby "-S", "rake"
+	end
+	
+	puts("BUILDING APPS");
+	Dir.chdir("apps") do
+		Dir["*/"].each { |d|
+			puts("BUILDING #{d.upcase}");
+			Dir.chdir(d) do
+				ruby "-S", "rake"
+			end
+		}
+	end
+	
+	puts("BUILDING RAMFS");
 	Dir.chdir("ramfs") do
 		ruby "-S", "rake"
 	end
 	
+	puts("BUILDING KERNEL");
 	Dir.chdir("kernel") do
 		ruby "-S", "rake"
 	end
@@ -41,7 +60,19 @@ task :clean do
 		ruby "-S", "rake", "clean"
 	end
 	
+	Dir.chdir("apps") do
+		Dir["*/"].each { |d|
+			Dir.chdir(d) do
+				ruby "-S", "rake", "clean"
+			end
+		}
+	end
+	
 	Dir.chdir("ramfs") do
+		ruby "-S", "rake", "clean"
+	end
+	
+	Dir.chdir("libc") do
 		ruby "-S", "rake", "clean"
 	end
 	

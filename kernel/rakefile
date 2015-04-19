@@ -22,19 +22,31 @@ file "bin/kernel.bin" => "bin/kernel.exe" do
 	end
 end
 
+LIBC_INC 	= "../libc/inc"
+LIBC_DIR 	= "../libc/bin"
+LIBC 		= "molly"
+
+LKFLAGS =
+	"-Xlinker " \
+	"-T kernel.ld " \
+	"-o bin/kernel.exe " \
+	"-nostdlib " \
+	"-lgcc " \
+	"-L#{LIBC_DIR} " \
+	"-l#{LIBC} "
+
 file "bin/kernel.exe" => OBJ do
-	sh "ld -T src/kernel.ld #{OBJ.join(" ")}"
+	sh "gcc #{OBJ.join(" ")} #{LKFLAGS}"
 end
 
 CFLAGS =
 	"-c " \
 	"-std=gnu99 " \
+	"-ffreestanding " \
 	"-Wall " \
 	"-Wextra " \
-	"-ffreestanding " \
-	"-nostdlib " \
-	"-lgcc " \
-	"-Isrc/inc " \
+	"-Iinc " \
+	"-I#{LIBC_INC} " \
 	"-mno-ms-bitfields "
 
 rule ".o" => [

@@ -20,6 +20,7 @@ static void sys_yield	(trapframe_t *tf);
 static void sys_fork	(trapframe_t *tf);
 static void sys_yieldp	(trapframe_t *tf);
 static void sys_stall	(trapframe_t *tf);
+static void sys_exec	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
@@ -32,6 +33,7 @@ static void syscall_handler(trapframe_t *tf) {
 		case SYS_FORK: 		sys_fork(tf); 	break;
 		case SYS_YIELDP: 	sys_yieldp(tf); break;
 		case SYS_STALL: 	sys_stall(tf); 	break;
+		case SYS_EXEC: 		sys_exec(tf); 	break;
 		
 		default:
 		kprintfln("unknown syscall");
@@ -175,16 +177,24 @@ static void sys_stall(trapframe_t *tf) {
 	
 	clock_t min = mspt;
 	unsigned adj = ((ms + min - 1) / min) * min;
-	kprintfln("stall %d ms (%d)", ms, adj);
+	//kprintfln("stall %d ms (%d)", ms, adj);
 	
 	clock_t now = ticks();
 	clock_t target = now + adj / mspt;
-	kprintfln("%d -> %d", now, target);
+	//kprintfln("%d -> %d", now, target);
 	while (ticks() < target)
 		__asm__("hlt");
 }
 
-
+static void sys_exec(trapframe_t *tf) {
+	char **args = ARG(tf, 0, char **);
+	kprintfln("exec");
+	
+	for (int i = 0; args[i] != 0; i++)
+		kprintfln("- %s", args[i]);
+		
+	RET(tf, 1);
+}
 
 
 

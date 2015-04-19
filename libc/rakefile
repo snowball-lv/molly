@@ -1,0 +1,53 @@
+require "rake/clean"
+
+LIB = "bin/libmolly.a"
+SRC = FileList["src/*.c", "src/*.asm"]
+OBJ = SRC.map do |f|
+	f.ext(".o").sub("src", "out")
+end
+
+directory "bin"
+directory "out"
+
+file LIB => ["bin", "out"] + OBJ do
+	sh "ar rcs #{LIB} #{OBJ.join(" ")}"
+end
+
+CFLAGS =
+	"-c " \
+	"-std=gnu99 " \
+	"-Wall " \
+	"-Wextra " \
+	"-ffreestanding " \
+	"-Iinc " \
+	"-mno-ms-bitfields "
+
+rule ".o" => [
+	proc { |tn| tn.sub("out", "src").ext(".c") } 
+] do |t|
+	sh "gcc #{CFLAGS} #{t.source} -o #{t.name}"
+end
+
+rule ".o" => [
+	proc { |tn| tn.sub("out", "src").ext(".asm") } 
+] do |t|
+	sh "nasm -f win32 #{t.source} -o #{t.name}"
+end
+	
+task :default => [LIB]
+
+CLEAN.include("bin")
+CLEAN.include("out")
+
+
+
+
+
+
+
+
+
+
+
+
+

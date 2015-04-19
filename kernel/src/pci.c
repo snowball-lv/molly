@@ -7,65 +7,75 @@
 #include <pci_list.h>
 #include <ide.h>
 
-#define CONFIG_ADDRESS		(0xCF8)
-#define CONFIG_DATA 		(0xCFC)
+#define CONFIG_ADDRESS		0xCF8
+#define CONFIG_DATA 		0xCFC
 
-static uint32_t pci_conf_read(	uint8_t bus, uint8_t dev,
-								uint8_t fun, uint8_t reg)
-{
-	uint32_t addr = 0;
-	
-	addr |= 0x80000000; //?
-	addr |= (uint32_t)bus << 16;
-	addr |= (uint32_t)(dev & 0b11111) << 11;
-	addr |= (uint32_t)(fun & 0b111) << 8;
-	addr |= (uint32_t)reg * 4;
-	
+#define ADDR(bus, dev, fun, off) \
+	((1 << 31) | (bus << 16) | (dev << 11) | (fun << 8) | off)
+
+static void conf_write(int addr, int value) {
 	out32(CONFIG_ADDRESS, addr);
-	
+	out32(CONFIG_DATA, value);
+}
+
+static int conf_read(int addr) {
+	out32(CONFIG_ADDRESS, addr);
 	return in32(CONFIG_DATA);
+}
+
+static int interrupt_line(int bus, int dev, int fun) {
+
+	int addr = ADDR(bus, dev, fun, 0x3c);
+	return conf_read(addr) & 0xff;
+}
+
+static void interrupt_line_set(	int bus, int dev,
+								int fun, int value) {
+
+	int addr = ADDR(bus, dev, fun, 0x3c);
+	conf_write(addr, value);
 }
 
 static uint8_t pci_header_type(uint8_t bus, uint8_t dev, uint8_t fun) {
 
-	uint32_t reg = pci_conf_read(bus, dev, fun, 3);
-	return (reg >> 16) & 0xff;
+	int addr = ADDR(bus, dev, fun, 0xc);
+	return (conf_read(addr) >> 16) & 0xff;
 }
 
 static uint16_t pci_vendor_id(uint8_t bus, uint8_t dev, uint8_t fun) {
 
-	uint32_t reg = pci_conf_read(bus, dev, fun, 0);
-	return reg & 0xffff;
+	int addr = ADDR(bus, dev, fun, 0x0);
+	return conf_read(addr) & 0xffff;
 }
 
 static uint16_t pci_device_id(uint8_t bus, uint8_t dev, uint8_t fun) {
 
-	uint32_t reg = pci_conf_read(bus, dev, fun, 0);
-	return (reg >> 16) & 0xffff;
+	int addr = ADDR(bus, dev, fun, 0x0);
+	return (conf_read(addr) >> 16) & 0xffff;
 }
 
 static uint8_t pci_class(uint8_t bus, uint8_t dev, uint8_t fun) {
 
-	uint32_t reg = pci_conf_read(bus, dev, fun, 2);
-	return (reg >> 24) & 0xff;
+	int addr = ADDR(bus, dev, fun, 0x8);
+	return (conf_read(addr) >> 24) & 0xff;
 }
 
 static uint8_t pci_subclass(uint8_t bus, uint8_t dev, uint8_t fun) {
 
-	uint32_t reg = pci_conf_read(bus, dev, fun, 2);
-	return (reg >> 16) & 0xff;
+	int addr = ADDR(bus, dev, fun, 0x8);
+	return (conf_read(addr) >> 16) & 0xff;
 }
 
 static uint8_t pci_prog_if(uint8_t bus, uint8_t dev, uint8_t fun) {
 
-	uint32_t reg = pci_conf_read(bus, dev, fun, 2);
-	return (reg >> 8) & 0xff;
+	int addr = ADDR(bus, dev, fun, 0x8);
+	return (conf_read(addr) >> 8) & 0xff;
 }
 
 static uint8_t pci_secondary_bus(uint8_t bus, uint8_t dev, uint8_t fun) {
 
-	uint32_t reg = pci_conf_read(bus, dev, fun, 6);
-	return (reg >> 8) & 0xff;
+	int addr = ADDR(bus, dev, fun, 0x18);
+	return (conf_read(addr) >> 8) & 0xff;
 }
 
 static void scan_bus(uint8_t bus);
@@ -112,23 +122,23 @@ static void dump_class(uint8_t class, uint8_t subclass, uint8_t prog_if) {
 #define S_IDE	0x1
 
 static int bar0(int bus, int dev, int fun) {
-	return pci_conf_read(bus, dev, fun, 4);
+	return conf_read(ADDR(bus, dev, fun, 0x10));
 }
 
 static int bar1(int bus, int dev, int fun) {
-	return pci_conf_read(bus, dev, fun, 5);
+	return conf_read(ADDR(bus, dev, fun, 0x14));
 }
 
 static int bar2(int bus, int dev, int fun) {
-	return pci_conf_read(bus, dev, fun, 6);
+	return conf_read(ADDR(bus, dev, fun, 0x18));
 }
 
 static int bar3(int bus, int dev, int fun) {
-	return pci_conf_read(bus, dev, fun, 7);
+	return conf_read(ADDR(bus, dev, fun, 0x1c));
 }
 
 static int bar4(int bus, int dev, int fun) {
-	return pci_conf_read(bus, dev, fun, 8);
+	return conf_read(ADDR(bus, dev, fun, 0x20));
 }
 
 static void scan_function(uint8_t bus, uint8_t dev, uint8_t fun) {
@@ -143,8 +153,12 @@ static void scan_function(uint8_t bus, uint8_t dev, uint8_t fun) {
 	uint8_t prog_if = pci_prog_if(bus, dev, fun);
 	
 	dump_class(class_code, subclass_code, prog_if);
-
+		
 	if (class_code == C_IDE && subclass_code == S_IDE) {
+	
+		interrupt_line_set(bus, dev, fun, 0xfe);
+		int il = interrupt_line(bus, dev, fun);
+		kprintfln(il == 0xfe ? "SATA" : "PATA");
 	
 		int r0 = bar0(bus, dev, fun);
 		int r1 = bar1(bus, dev, fun);
