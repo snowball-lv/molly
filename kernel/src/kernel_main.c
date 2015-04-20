@@ -102,13 +102,7 @@ void kernel_main(MemMap *mm) {
 	
 	enable_ints();
 	
-	char *args[] = {
-		"init.exe",
-		"-s",
-		0
-	};
-	
-	exec(args);
+	run_init();
 	
 	//init_pci();
 	

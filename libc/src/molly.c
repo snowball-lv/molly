@@ -7,6 +7,7 @@ int atexit(void (*func)(void)) { return 0; }
 
 void _molly_entry(int argc, char **argv) {
 	main(argc, argv);
+	exit();
 }
 
 int syscall_do(int f, ...);
@@ -39,12 +40,17 @@ void stall(unsigned ms) {
 	syscall_do(SYS_STALL, ms);
 }
 
-void exec(char **args) {
-	syscall_do(SYS_EXEC, args);
+int exec(char *path, char **args) {
+	return syscall_do(SYS_EXEC, path, args);
 }
 
+int open(char *path) {
+	return syscall_do(SYS_OPEN, path);
+}
 
-
+void exit() {
+	syscall_do(SYS_EXIT);
+}
 
 
 

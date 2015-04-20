@@ -10,6 +10,8 @@
 #define SYS_YIELDP		(6)
 #define SYS_STALL		(7)
 #define SYS_EXEC		(8)
+#define SYS_OPEN		(9)
+#define SYS_EXIT		(10)
 
 void 	log		(const char *msg);
 void 	*sbrk	(int size);
@@ -18,9 +20,9 @@ void	yield	();
 int		fork	();
 void	yieldp	();
 void	stall	(unsigned ms);
-void	exec	(char **args);
-
-
+int		exec	(char *path, char **args);
+int 	open	(char *path);
+void 	exit	();
 
 
 

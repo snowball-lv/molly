@@ -2,8 +2,9 @@ require "rake/clean"
 
 FILES = FileList[
 	"loremipsum.txt",
-	"akatosh.txt"]
-
+	"akatosh.txt",
+	"../apps/*/*.exe"]
+	
 task :default => "ramfs_img.o"
 
 file "ramfs_img.o" => "disk.rfs" do

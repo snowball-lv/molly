@@ -25,7 +25,7 @@ end
 
 LKFLAGS =
 	"-Xlinker " \
-	"-e__molly_entry " \
+	"-T link.ld " \
 	"-o #{EXE} " \
 	"-nostdlib " \
 	"-lgcc " \

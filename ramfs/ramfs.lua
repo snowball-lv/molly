@@ -36,10 +36,11 @@ align8(disk);
 
 for i = 1, #arg do
 	local file = io.open(arg[i], "rb");
+	local sname = arg[i]:match("([^/]+)$");
 	
 	align8(disk);
 	
-	disk:write(arg[i]);
+	disk:write(sname);
 	write8(disk, 0);
 	
 	align8(disk);

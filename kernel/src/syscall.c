@@ -21,6 +21,8 @@ static void sys_fork	(trapframe_t *tf);
 static void sys_yieldp	(trapframe_t *tf);
 static void sys_stall	(trapframe_t *tf);
 static void sys_exec	(trapframe_t *tf);
+static void sys_open	(trapframe_t *tf);
+static void sys_exit	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
@@ -34,6 +36,8 @@ static void syscall_handler(trapframe_t *tf) {
 		case SYS_YIELDP: 	sys_yieldp(tf); break;
 		case SYS_STALL: 	sys_stall(tf); 	break;
 		case SYS_EXEC: 		sys_exec(tf); 	break;
+		case SYS_OPEN: 		sys_open(tf); 	break;
+		case SYS_EXIT: 		sys_exit(tf); 	break;
 		
 		default:
 		kprintfln("unknown syscall");
@@ -57,7 +61,8 @@ static uint32_t *getbp(trapframe_t *tf) {
 #define RET(tf, value)		(tf->eax = (value))
 
 static void sys_log(trapframe_t *tf) {
-	kprintfln("log: %s", ARG(tf, 0, const char *));
+	char *msg = ARG(tf, 0, char *);
+	kprintfln("log: %s", msg);
 }
 
 static void sys_sbrk(trapframe_t *tf) {
@@ -87,8 +92,6 @@ static void sys_sbrk(trapframe_t *tf) {
 	}
 }
 
-typedef int (*tmain_t)();
-
 static void sys_mkt(trapframe_t *tf) {
 	kprintfln("mkt");
 	
@@ -109,7 +112,7 @@ static void sys_mkt(trapframe_t *tf) {
 		return;
 	}
 	
-	tmain_t tmain = ARG(tf, 0, tmain_t);
+	entry_f tmain = ARG(tf, 0, entry_f);
 	set_up_thread(t, tmain);
 }
 
@@ -187,16 +190,45 @@ static void sys_stall(trapframe_t *tf) {
 }
 
 static void sys_exec(trapframe_t *tf) {
-	char **args = ARG(tf, 0, char **);
-	kprintfln("exec");
+	char *path = ARG(tf, 0, char *);
+	kprintfln("exec: %s", path);
 	
-	for (int i = 0; args[i] != 0; i++)
-		kprintfln("- %s", args[i]);
-		
-	RET(tf, 1);
+	int f = open(path);
+	
+	RET(tf, 0);
 }
 
+static void sys_open(trapframe_t *tf) {
+	char *path = ARG(tf, 0, char *);
+	kprintfln("open: %s", path);
+	
+	proc_t *cp 		= cproc();
+	int fd 			= -1;
+	f_handle *fh 	= 0;
+	
+	//find an free slot for the file
+	for (int i = 0; i < MAX_FILES; i++) {
+		if (cp->files[i].state == S_FREE) {
+			fd = i;
+			fh = &cp->files[fd];
+		}
+	}
+	
+	//no free file slots
+	if (fd < 0) {
+		RET(tf, -1);
+		return;
+	}
+	
+	//free slot found
+	
+	
+	RET(tf, 0);
+}
 
+static void sys_exit(trapframe_t *tf) {
+	panic("exit");
+}
 
 
 
