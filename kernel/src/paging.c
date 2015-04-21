@@ -4,10 +4,6 @@
 #include <kalloc.h>
 #include <proc.h>
 #include <molly.h>
-
-//paging_asm.asm
-void load_PDBR(pd_t *pd);
-void enable_paging();
 	
 #define PDEI(a)		(((uintptr_t)(a) >> 22) & 0x3ff)
 #define PTEI(a)		(((uintptr_t)(a) >> 12) & 0x3ff)
@@ -110,8 +106,23 @@ pd_t *clone_pd() {
 	return npd;
 }
 
+pd_t *create_pd() {
 
-
+	pd_t *pd = kmalloc_page();
+	memset(pd, 0, PAGE_SIZE);
+	
+	pd_t *cpd = (pd_t *)0xfffff000;
+	
+	//copy kernel pages
+	for (int i = 768; i < 1024; i++)
+		pd->entries[i] = cpd->entries[i];
+		
+	//add last PT recursion
+	pde_t *rec = &pd->entries[1023];
+	*rec = (uintptr_t)vtp(pd) | PTE_P | PTE_RW;
+	
+	return pd;
+}
 
 
 

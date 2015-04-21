@@ -34,12 +34,12 @@ typedef struct {
 	thread_t 	threads[MAX_THREADS];
 	int 		ct_num;
 	char 		*cwd;
-	f_handle	files[MAX_FILES];
+	file_handle	files[MAX_FILES];
 } proc_t;
 
 proc_t *cproc();
 
-
+int create_proc(char *name, char **args);
 
 
 

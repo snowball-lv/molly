@@ -5,62 +5,36 @@
 #include <string.h>
 #include <kalloc.h>
 
-extern none_t _RAMFS_START;
-
-#define ROUND_UP(v)	((char *)(((uintptr_t)(v) + 7) & ~(7)))
-
-typedef void fs_node;
-
-typedef struct {
-	char *start;
-} ramfs_node;
-
-size_t ramfs_read(fs_node *n, void *buff, size_t count) {
-	kprintfln("ramfs read");
-	ramfs_node *f = n;
-	
-	char *ptr = f->start;
-	kprintfln("%s", ptr);
-	ptr += strlen(ptr) + 1;
-	ptr = ROUND_UP(ptr);
-	ptr += 4;
-	ptr = ROUND_UP(ptr);
-	
-	memcpy(buff, ptr, count);
-	
+fs_node *console_open(char *path) {
+	kprintfln("opening console");
 	return 0;
 }
 
-fs_node *ramfs_open(char *path) {
+fs_node *devfs_open(char *path) {
+	kprintfln("devfs open: %s", path);
+	if (!strcmp("console", path)) {
+		return console_open(0);
+	}
+	return 0;
+}
 
-	char *ptr = (char *)&_RAMFS_START;
+static fs_calls devfs_calls = {
+	.open = devfs_open
+};
+
+fs_node *vfs_open(char *path) { 
+	kprintfln("vfs open: %s", path);
 	
-	size_t count = *(size_t *)ptr;
-	ptr += 4;
-	
-	for (size_t i = 0; i < count; i++) {
-		ptr = ROUND_UP(ptr);
-		char *name = ptr;
+	if (path == 0)
+		return 0;
 		
-		if (!strcmp(path, name)) {
-			//file found
-			ramfs_node *n = kmalloc(sizeof(ramfs_node));
-			n->start = ptr;
-			return n;
-		}
-		
-		ptr += strlen(name) + 1;
-		ptr = ROUND_UP(ptr);
-		size_t size = *(size_t *)ptr;
-		ptr += 4;
-		ptr = ROUND_UP(ptr);
-		ptr += size;
+	if (path[0] == '#') {
+		//device
+		return devfs_calls.open(&path[1]);
 	}
 	
 	return 0;
 }
-
-
 
 
 

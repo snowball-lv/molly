@@ -23,9 +23,19 @@ int main(int argc, char **argv) {
 extern none_t _BSS_START;
 extern none_t _BSS_END;
 extern none_t _KERNEL_END;
-extern pd_t init_pd;
 
 #define _4MB		(4 * 1024 * 1024)
+#define PDE_SHIFT 	(22)
+
+__attribute__((aligned(PAGE_SIZE)))
+pd_t boot_pd = {
+	.entries = {
+		[0]
+			= (0) | PTE_P | PTE_RW | PTE_PS,
+		[KERNEL_BASE >> PDE_SHIFT]
+			= (0) | PTE_P | PTE_RW | PTE_PS
+	}
+};
 
 //paging enabled
 void kernel_main(MemMap *mm) {
@@ -70,15 +80,18 @@ void kernel_main(MemMap *mm) {
 	
 	//alloc 4mb
 	pmm_set_blocks(0, _4MB / PAGE_SIZE);
+
+	//remove lower mapping
+	boot_pd.entries[0] = 0;
 	
 	//add recursive mapping (necessary for kalloc)
-	pde_t *last = &init_pd.entries[1023];
-	*last = (uintptr_t)&init_pd - KERNEL_OFF;
+	pde_t *last = &boot_pd.entries[1023];
+	*last = (uintptr_t)&boot_pd - KERNEL_OFF;
 	*last |= PTE_P | PTE_RW;
 	
 	//allocate kernel PDEs
 	for (int i = 768 + 1; i < 1023; i++) {
-		pde_t *pde = &init_pd.entries[i];
+		pde_t *pde = &boot_pd.entries[i];
 		*pde = (uintptr_t)pmm_alloc_block();
 		*pde |= PTE_P | PTE_RW;
 	}

@@ -2,7 +2,7 @@ bits 32
 
 extern _kernel_main
 extern _kmain
-extern _init_pd
+extern _boot_pd
 
 %define CR0_PG 			(1 << 31)
 %define CR0_WP 			(1 << 16)
@@ -26,7 +26,7 @@ start:
 	mov cr4, eax
 	
 	;load initial page dir
-	mov eax, _init_pd - KERNEL_OFF
+	mov eax, _boot_pd - KERNEL_OFF
 	mov cr3, eax
 	
 	;enable paging

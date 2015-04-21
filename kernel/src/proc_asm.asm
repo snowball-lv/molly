@@ -18,7 +18,10 @@ _user_jump:
 	mov eax, [ebp + 8]	;kernel stack pointer
 	mov esp, eax
 	
-	iret
+	popa
+	popf
+	
+	ret
 
 ;void thread_entry();
 global _thread_entry

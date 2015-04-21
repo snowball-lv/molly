@@ -23,6 +23,8 @@ static void sys_stall	(trapframe_t *tf);
 static void sys_exec	(trapframe_t *tf);
 static void sys_open	(trapframe_t *tf);
 static void sys_exit	(trapframe_t *tf);
+static void sys_close	(trapframe_t *tf);
+static void sys_write	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
@@ -38,6 +40,8 @@ static void syscall_handler(trapframe_t *tf) {
 		case SYS_EXEC: 		sys_exec(tf); 	break;
 		case SYS_OPEN: 		sys_open(tf); 	break;
 		case SYS_EXIT: 		sys_exit(tf); 	break;
+		case SYS_CLOSE: 	sys_close(tf); 	break;
+		case SYS_WRITE: 	sys_write(tf); 	break;
 		
 		default:
 		kprintfln("unknown syscall");
@@ -191,44 +195,55 @@ static void sys_stall(trapframe_t *tf) {
 
 static void sys_exec(trapframe_t *tf) {
 	char *path = ARG(tf, 0, char *);
+	char **args = ARG(tf, 1, char **);
 	kprintfln("exec: %s", path);
 	
-	int f = open(path);
+	int ret = create_proc(path, args);
 	
-	RET(tf, 0);
+	RET(tf, ret);
 }
 
 static void sys_open(trapframe_t *tf) {
 	char *path = ARG(tf, 0, char *);
 	kprintfln("open: %s", path);
 	
-	proc_t *cp 		= cproc();
-	int fd 			= -1;
-	f_handle *fh 	= 0;
+	fs_node *n = vfs_open(path);
 	
-	//find an free slot for the file
-	for (int i = 0; i < MAX_FILES; i++) {
-		if (cp->files[i].state == S_FREE) {
-			fd = i;
-			fh = &cp->files[fd];
-		}
-	}
-	
-	//no free file slots
-	if (fd < 0) {
-		RET(tf, -1);
-		return;
-	}
-	
-	//free slot found
-	
-	
-	RET(tf, 0);
+	RET(tf, 1);
 }
 
 static void sys_exit(trapframe_t *tf) {
 	panic("exit");
 }
+
+static void sys_close(trapframe_t *tf) {
+	int fd = ARG(tf, 0, int);
+	kprintfln("close: %d", fd);
+}
+
+static void sys_write(trapframe_t *tf) {
+
+	int fd = ARG(tf, 0, int);
+	const void *buff = ARG(tf, 1, const void *);
+	int count = ARG(tf, 2, int);
+	
+	kprintfln("write: %d", fd);
+	kprintfln("%s", buff);
+	
+	fs_handle *h = &cproc()->files[fd];
+	
+	fs_node *n = h->n;
+	fs_calls *calls = h->calls;
+	
+	int ret = calls->write(n, buff, count);
+	
+	RET(tf, ret);
+}
+
+
+
+
+
 
 
 

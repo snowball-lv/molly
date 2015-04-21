@@ -9,18 +9,9 @@
 #include <param.h>
 #include <gdt.h>
 #include <idt.h>
+#include <pe.h>
 
-#define PDE_SHIFT 		(22)
-
-__attribute__((aligned(PAGE_SIZE)))
-pd_t init_pd = {
-	.entries = {
-		[0]
-			= (0) | PTE_P | PTE_RW | PTE_PS | PTE_U,
-		[KERNEL_BASE >> PDE_SHIFT]
-			= (0) | PTE_P | PTE_RW | PTE_PS
-	}
-};
+extern pd_t boot_pd;
 
 #define MAX_PROCS	(16)
 
@@ -35,7 +26,7 @@ proc_t *cproc() {
 	return &procs[cp_num];
 }
 
-extern pd_t init_pd;
+extern pd_t boot_pd;
 void user_main();
 
 //proc_asm.asm
@@ -49,8 +40,7 @@ extern none_t _RAMFS_START;
 
 #define ROUND_UP(v)	((char *)(((uintptr_t)(v) + 7) & ~(7)))
 
-static char		*init_start;
-static size_t 	init_size;
+static char *init_start;
 
 static int find_init() {
 
@@ -65,7 +55,7 @@ static int find_init() {
 		ptr += strlen(name) + 1;
 		
 		ptr = ROUND_UP(ptr);
-		init_size = *(size_t *)ptr;
+		uint32_t init_size = *(size_t *)ptr;
 		ptr += 4;
 		
 		ptr = ROUND_UP(ptr);
@@ -79,227 +69,64 @@ static int find_init() {
 	return 0;
 }
 
-typedef int8_t 	BYTE;
-typedef int16_t WORD;
-typedef int32_t DWORD;
-
-#define PACKED __attribute__((packed))
-
-typedef struct {
-	WORD  Machine;
-	WORD  NumberOfSections;
-	DWORD TimeDateStamp;
-	DWORD PointerToSymbolTable;
-	DWORD NumberOfSymbols;
-	WORD  SizeOfOptionalHeader;
-	WORD  Characteristics;
-} PACKED IMAGE_FILE_HEADER;
-
-typedef struct {
-	WORD                 Magic;
-	BYTE                 MajorLinkerVersion;
-	BYTE                 MinorLinkerVersion;
-	DWORD                SizeOfCode;
-	DWORD                SizeOfInitializedData;
-	DWORD                SizeOfUninitializedData;
-	DWORD                AddressOfEntryPoint;
-	DWORD                BaseOfCode;
-	DWORD                BaseOfData;
-	DWORD                ImageBase;
-	DWORD                SectionAlignment;
-	DWORD                FileAlignment;
-	WORD                 MajorOperatingSystemVersion;
-	WORD                 MinorOperatingSystemVersion;
-	WORD                 MajorImageVersion;
-	WORD                 MinorImageVersion;
-	WORD                 MajorSubsystemVersion;
-	WORD                 MinorSubsystemVersion;
-	DWORD                Win32VersionValue;
-	DWORD                SizeOfImage;
-	DWORD                SizeOfHeaders;
-	DWORD                CheckSum;
-	WORD                 Subsystem;
-	WORD                 DllCharacteristics;
-	DWORD                SizeOfStackReserve;
-	DWORD                SizeOfStackCommit;
-	DWORD                SizeOfHeapReserve;
-	DWORD                SizeOfHeapCommit;
-	DWORD                LoaderFlags;
-	DWORD                NumberOfRvaAndSizes;
-  //IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
-} PACKED IMAGE_OPTIONAL_HEADER;
-
-#define IMAGE_SIZEOF_SHORT_NAME		8
-
-typedef struct {
-	BYTE  Name[IMAGE_SIZEOF_SHORT_NAME];
-	union {
-		DWORD PhysicalAddress;
-		DWORD VirtualSize;
-	} Misc;
-	DWORD VirtualAddress;
-	DWORD SizeOfRawData;
-	DWORD PointerToRawData;
-	DWORD PointerToRelocations;
-	DWORD PointerToLinenumbers;
-	WORD  NumberOfRelocations;
-	WORD  NumberOfLinenumbers;
-	DWORD Characteristics;
-} PACKED IMAGE_SECTION_HEADER;
-
-typedef struct {
-	DWORD VirtualAddress;
-	DWORD Size;
-} PACKED IMAGE_DATA_DIRECTORY;
-
-static intptr_t init_brk = 0;
-static entry_f	init_entry;
-
-static void load_image() {
-
-	if (!find_init()) {
-		panic("init not found");
-	}
-	
-	//kprintfln("start: %s", init_start);
-	intptr_t sigoff = *(int32_t *)(init_start + 0x3c);
-	//kprintfln("sigoff: %x", sigoff);
-	char *sig = init_start + sigoff;
-	//kprintfln("sig: %s", sig);
-	
-	IMAGE_FILE_HEADER *h = (IMAGE_FILE_HEADER *)(sig + 4);
-	//kprintfln("sections: %d", h->NumberOfSections);
-	
-	char *ptr = (char *)h;
-	ptr += sizeof(IMAGE_FILE_HEADER);
-	
-	IMAGE_OPTIONAL_HEADER *opt = (IMAGE_OPTIONAL_HEADER *)ptr;
-	
-	//kprintfln("NumberOfRvaAndSizes: %d", opt->NumberOfRvaAndSizes);
-	//IMAGE_DATA_DIRECTORY *brt = (char *)opt + 136;
-	//kprintfln("brt addr: %x", brt->VirtualAddress);
-	//kprintfln("brt size: %d", brt->Size);
-	
-	intptr_t entry = opt->ImageBase + opt->AddressOfEntryPoint;
-	init_entry = (entry_f)entry;
-	//kprintfln("entry: %x", entry);
-	//kprintfln("magic: %x", opt->Magic);
-	//kprintfln("align: %x", opt->SectionAlignment);
-	//kprintfln("base: %x", opt->ImageBase);
-	
-	ptr = (char *)opt;
-	ptr += h->SizeOfOptionalHeader;
-	
-	for (int i = 0; i < h->NumberOfSections; i++) {
-	
-		IMAGE_SECTION_HEADER *sh = (IMAGE_SECTION_HEADER *)ptr;
-		
-		/*
-		kprintfln(
-			"name: %s, size: %x, addr: %d",
-			sh->Name,
-			sh->Misc.VirtualSize,
-			sh->VirtualAddress);
-		*/
-		
-		ptr += sizeof(IMAGE_SECTION_HEADER);
-	
-		char *vbase = (char *)opt->ImageBase + sh->VirtualAddress;
-		char *pbase = init_start + sh->PointerToRawData;
-	
-		for (int off = 0; off < sh->Misc.VirtualSize; off += PAGE_SIZE) {
-			char *dst = vbase + off;
-			char *src = pbase + off;
-			void *page = pmm_alloc_block();
-			map_page(dst, page, PTE_P | PTE_RW | PTE_U);
-			memcpy(dst, src, PAGE_SIZE);
-			
-			intptr_t end = (intptr_t)dst + PAGE_SIZE;
-			if (end > init_brk)
-				init_brk = end;
-		}
-		
-	}
-}
+int create_proc(char *path, char **args);
 
 void run_init() {
 
-	//remove lower mapping
-	init_pd.entries[0] = 0;
-	reloadPDBR();
-	
-	//load init.exe from ram disk
-	load_image();
-
+	//null proc table
 	for (int i = 0; i < MAX_PROCS; i++)
 		procs[i].state = S_FREE;
-		
+
 	proc_t *p = &procs[0];
 	
-	p->state	= S_USED;
-	p->pd 		= &init_pd;
-	p->brk 		= (void *)init_brk;
+	p->state 	= S_USED;
+	p->pd	 	= create_pd();
 	p->ct_num 	= 0;
+		
+	load_PDBR(vtp(p->pd));
+		
+	find_init();
+	
+	uintptr_t brk = 0;
+	entry_f	entry = 0;
+	
+	load_image(init_start, &entry, &brk);
+		
+	kprintfln("brk: %x", brk);
+	kprintfln("entry: %x", entry);
+		
+	p->brk = (void *)brk;
 	
 	for (int i = 0; i < MAX_THREADS; i++)
 		p->threads[i].state = S_FREE;
-		
+	
 	thread_t *t = &p->threads[0];
+	
+	set_up_thread(t, entry);
+	
+	/*
+	
 	t->state 	= S_USED;
 	t->ustack 	= sbrk(4096);
 	t->usp 		= t->ustack + 1024;
 	t->kstack	= kmalloc(4096);
 	t->ktop 	= t->kstack + 1024;
 	t->ksp 		= t->ktop;
-	t->entry 	= init_entry;
+	t->entry 	= *entry;
 	
 	UPUSH(0);	//argv
 	UPUSH(0);	//argc
 	UPUSH(0);	//ret
 	
-	PUSH(0x20 | 0x3);		//ss
-	PUSH(t->usp);			//esp
-	PUSH(read_flags());		//eflags
-	PUSH(0x18 | 0x3);		//cs
-	PUSH(t->entry);			//eip
+	PUSH(0x20 | 0x3);	//ss
+	PUSH(t->usp);		//esp
+	PUSH(read_flags());	//eflags
+	PUSH(0x18 | 0x3);	//cs
+	PUSH(t->entry);		//eip
+	
+	*/
 	
 	set_tss(t->ktop);
-	
-	user_jump(t->ksp);
-}
-
-void user_mode() {
-
-	for (int i = 0; i < MAX_PROCS; i++)
-		procs[i].state = S_FREE;
-
-	proc_t *p = &procs[0];
-	
-	p->state	= S_USED;
-	p->pd 		= &init_pd;
-	p->brk 		= (void *)_4MB;
-	p->ct_num 	= 0;
-
-	for (int i = 0; i < MAX_THREADS; i++)
-		p->threads[i].state = S_FREE;
-	
-	thread_t *t = &p->threads[0];
-	t->state 	= S_USED;
-	t->ustack 	= sbrk(4096);
-	t->usp 		= t->ustack + 1024;
-	t->kstack	= kmalloc(4096);
-	t->ktop 	= t->kstack + 1024;
-	t->ksp 		= t->ktop;
-	t->entry 	= 0;
-	
-	PUSH(0x20 | 0x3);				//ss
-	PUSH(t->usp);					//esp
-	PUSH(read_flags());				//eflags
-	PUSH(0x18 | 0x3);				//cs
-	PUSH(user_main - KERNEL_OFF);	//eip
-	
-	set_tss(t->ktop);
-	
 	user_jump(t->ksp);
 }
 
@@ -316,11 +143,15 @@ void set_up_thread(thread_t *t, entry_f entry) {
 	t->ktop		= t->kstack + 1024;
 	t->ksp 		= t->ktop;
 	
-	PUSH(0x20 | 0x3);				//ss
-	PUSH(t->usp);					//esp
-	PUSH(read_flags());				//eflags
-	PUSH(0x18 | 0x3);				//cs
-	PUSH(t->entry - KERNEL_OFF);	//eip
+	UPUSH(0);	//argv
+	UPUSH(0);	//argc
+	UPUSH(0);	//ret
+	
+	PUSH(0x20 | 0x3);	//ss
+	PUSH(t->usp);		//esp
+	PUSH(read_flags());	//eflags
+	PUSH(0x18 | 0x3);	//cs
+	PUSH(t->entry);		//eip
 	
 	PUSH(thread_entry);
 	PUSH(read_flags());
@@ -370,6 +201,78 @@ int proc_clone(trapframe_t *tf) {
 	
 	return 1;
 }
+
+static int fetch_free_proc() {
+
+	//free pid
+	int pid = -1;
+	
+	//find free proc slot
+	for (int i = 0; i < MAX_PROCS; i++) {
+		if (procs[i].state == S_FREE) {
+			//reserve slot
+			procs[i].state = S_USED;
+			pid = i;
+			break;
+		}
+	}
+	
+	return pid;
+}
+
+int create_proc(char *path, char **args) {
+	
+	//get free proc slot
+	int pid = fetch_free_proc();
+	
+	//no slot found
+	if (pid < 0)
+		return -1;
+		
+	//new proc
+	proc_t *p = &procs[pid];
+	
+	//create new proc's pd with kernel pages
+	p->pd = create_pd();
+	
+	//current proc's pd (indirect due to init)
+	pd_t *cpd = (pd_t *)0xfffff000;
+	
+	//switch to new pd
+	load_PDBR(vtp(p->pd));
+	
+	//load bianry image into lower memory
+	uintptr_t brk = 0;
+	entry_f entry = 0;
+	int err = load_image(init_start, &entry, &brk);
+	
+	//failed to load image
+	if (err < 0) {
+		//switch back to callers pd
+		load_PDBR(vtp(cpd));
+		return -1;
+	}
+		
+	p->brk 		= (void *)brk;
+	p->ct_num 	= 0;
+
+	//clear thread table
+	for (int i = 0; i < MAX_THREADS; i++)
+		p->threads[i].state = S_FREE;
+		
+	//set up initial thread
+	thread_t *t = &p->threads[0];
+	set_up_thread(t, entry);
+	
+	//switch back to callers pd
+	load_PDBR(vtp(cpd));
+	
+	return pid;
+}
+
+
+
+
 
 
 

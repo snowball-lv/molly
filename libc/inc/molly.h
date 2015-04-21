@@ -12,6 +12,8 @@
 #define SYS_EXEC		(8)
 #define SYS_OPEN		(9)
 #define SYS_EXIT		(10)
+#define SYS_CLOSE		(11)
+#define SYS_WRITE		(12)
 
 void 	log		(const char *msg);
 void 	*sbrk	(int size);
@@ -23,7 +25,9 @@ void	stall	(unsigned ms);
 int		exec	(char *path, char **args);
 int 	open	(char *path);
 void 	exit	();
-
+int 	open	(char *path);
+int		close	(int fd);
+int		write	(int fd, const void *buff, int count);
 
 
 

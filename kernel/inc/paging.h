@@ -29,11 +29,13 @@ _Static_assert(sizeof(pde_t)	== 4, "pde_t size not 8");
 void map_page(void *virt, void *phys, int flags);
 
 //paging_asm.asm
+void load_PDBR(pd_t *pd);
+void enable_paging();
 void invlpg(void *page);
 void reloadPDBR();
 
-
-
+pd_t *create_pd();
+void *vtp(void *virt);
 
 
 

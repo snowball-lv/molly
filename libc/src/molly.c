@@ -52,6 +52,20 @@ void exit() {
 	syscall_do(SYS_EXIT);
 }
 
+int close(int fd) {
+	return syscall_do(SYS_CLOSE, fd);
+}
+
+int write(int fd, const void *buff, int count) {
+	return syscall_do(SYS_WRITE, fd, buff, count);
+}
+
+
+
+
+
+
+
 
 
 
