@@ -5,6 +5,7 @@
 #include <klib.h>
 #include <string.h>
 #include <idt.h>
+#include <acpi.h>
 
 #define PIT_HZ			1193182
 #define COUNTER_0 		0x40

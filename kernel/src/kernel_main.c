@@ -13,6 +13,8 @@
 #include <proc.h>
 #include <pic.h>
 #include <pit.h>
+#include <kbd.h>
+#include <acpi.h>
 
 //not used
 //leave for linking with molly's libc
@@ -59,7 +61,15 @@ void kernel_main(MemMap *mm) {
 	for (size_t i = 0; i < mm->size; i++) {
 	
 		MemMapEntry *e = &mm->entries[i];
+			
+		uint32_t base = (uint32_t)e->base;
+		uint32_t size = (uint32_t)e->size;
 		
+		kprintfln(	"%d: %d -> %d",
+					e->type,
+					base / 1024,
+					(base + size) / 1024);
+			
 		if (e->type != MMAP_AVAILABLE)
 			continue;
 			
@@ -82,7 +92,7 @@ void kernel_main(MemMap *mm) {
 	pmm_set_blocks(0, _4MB / PAGE_SIZE);
 
 	//remove lower mapping
-	boot_pd.entries[0] = 0;
+	//boot_pd.entries[0] = 0;
 	
 	//add recursive mapping (necessary for kalloc)
 	pde_t *last = &boot_pd.entries[1023];
@@ -97,6 +107,25 @@ void kernel_main(MemMap *mm) {
 	}
 	
 	reloadPDBR();
+	
+	//map acpi memory
+	for (size_t i = 0; i < mm->size; i++) {
+	
+		MemMapEntry *e = &mm->entries[i];
+			
+		if (e->type != MMAP_RECLAIM)
+			continue;
+			
+		//assert the memory regions are 4k aligned
+		ASSERT_PAGE_ALIGNED(e->base);
+		ASSERT_PAGE_ALIGNED(e->size);
+	
+		char *ptr = (char *)(uintptr_t)e->base;
+		char *end = ptr + e->size;
+		for (; ptr < end; ptr += PAGE_SIZE) {
+			map_page(ptr, ptr, PTE_P | PTE_RW);
+		}
+	}
 	
 	//init kernel heap allocator
 	init_kalloc();
@@ -113,9 +142,20 @@ void kernel_main(MemMap *mm) {
 	//set up syscalls
 	init_syscall();
 	
+	//set up acpi
+	init_acpi();
+	
+	//set up keyboard
+	init_kbd();
+	
+	//enable interrupts
 	enable_ints();
 	
-	run_init();
+	//set up vfs, devfs and other shit
+	//init_vfs();
+	
+	//start first user process
+	//run_init();
 	
 	//init_pci();
 	

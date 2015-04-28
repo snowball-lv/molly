@@ -30,6 +30,24 @@ const char *kstrchr(const char *str, int character) {
 	return str;
 }
 
+int strdiff(const char *str1, const char *str2) {
+
+	int i = 0;
+	
+	while (1) {
+	
+		if (str1[i] == 0 || str2[i] == 0)
+			break;
+			
+		if (str1[i] != str2[i])
+			break;
+		
+		i++;
+	}
+	
+	return i;
+}
+
 
 
 

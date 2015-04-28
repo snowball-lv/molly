@@ -7,7 +7,8 @@
 
 #define IRQ_BASE 		(32)
 
-#define IRQ_TIMER		(0)
+#define IRQ_TIMER		0
+#define IRQ_KBD			1
 
 #define IRQ_SPURIOUS_MASTER		(7)
 #define IRQ_SPURIOUS_SLAVE		(15)

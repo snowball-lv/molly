@@ -33,23 +33,6 @@ char *strcat(char *destination, const char *source) {
 	return destination;
 }
 
-size_t strlen(const char *str) {
-	size_t c = 0;
-	while (*str) {
-		c++;
-		str++;
-	}
-	return c;
-}
-
-char *strchr(const char *str, int character) {
-
-	while (*str != character && *str != 0)
-		str++;
-
-	return (char *)str;
-}
-
 int strcmp(const char *str1, const char *str2) {
 
 	size_t len = strlen(str1);
@@ -63,8 +46,6 @@ int strcmp(const char *str1, const char *str2) {
 	
 	return 0;
 }
-
-
 
 
 

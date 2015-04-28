@@ -6,6 +6,7 @@
 #define MMAP_RESERVED	0x2
 #define MMAP_RECLAIM	0x3
 #define MMAP_NVS		0x4
+#define MMAP_BAD		0x5
 
 #define ATTR __attribute__((packed))
 

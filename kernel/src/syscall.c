@@ -207,9 +207,38 @@ static void sys_open(trapframe_t *tf) {
 	char *path = ARG(tf, 0, char *);
 	kprintfln("open: %s", path);
 	
-	fs_node *n = vfs_open(path);
+	proc_t *p = cproc();
+	int index = -1;
 	
-	RET(tf, 1);
+	for (int i = 0; i < MAX_FILES; i++) {
+		file_handle *fh = &p->files[i];
+		if (fh->state == S_FREE) {
+			index = i;
+			break;
+		}
+	}
+	
+	if (index == -1) {
+		RET(tf, -1);
+		return;
+	}
+	
+	vnode *vn = vfs_open(path);
+	
+	if (vn == 0) {
+		RET(tf, -1);
+		return;
+	}
+	
+	file_handle *fh = &p->files[index];
+	
+	fh->state 	= S_USED;
+	fh->vn 		= vn;
+	fh->off		= 0;
+	
+	kprintfln("opened fd: %d", index);
+	
+	RET(tf, index);
 }
 
 static void sys_exit(trapframe_t *tf) {
@@ -218,7 +247,13 @@ static void sys_exit(trapframe_t *tf) {
 
 static void sys_close(trapframe_t *tf) {
 	int fd = ARG(tf, 0, int);
-	kprintfln("close: %d", fd);
+	
+	proc_t *p = cproc();
+	file_handle *fh = &p->files[fd];
+	fh->state = S_FREE;
+	
+	kprintfln("closed fd: %d", fd);
+	RET(tf, 0);
 }
 
 static void sys_write(trapframe_t *tf) {
@@ -227,15 +262,17 @@ static void sys_write(trapframe_t *tf) {
 	const void *buff = ARG(tf, 1, const void *);
 	int count = ARG(tf, 2, int);
 	
-	kprintfln("write: %d", fd);
-	kprintfln("%s", buff);
+	kprintfln("write fd:", fd);
 	
-	fs_handle *h = &cproc()->files[fd];
+	proc_t *p = cproc();
+	file_handle *fh = &p->files[fd];
 	
-	fs_node *n = h->n;
-	fs_calls *calls = h->calls;
+	vnode *vn 	= fh->vn;
+	idrvr *fs 	= vn->drvr;
+	fs_node *fn = vn->fn;
 	
-	int ret = calls->write(n, buff, count);
+	int ret = fs->write(fn, (void *)buff, fh->off, count);
+	fh->off += ret;
 	
 	RET(tf, ret);
 }

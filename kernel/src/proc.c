@@ -99,6 +99,9 @@ void run_init() {
 	
 	for (int i = 0; i < MAX_THREADS; i++)
 		p->threads[i].state = S_FREE;
+		
+	for (int i = 0; i < MAX_THREADS; i++)
+		p->files[i].state = S_FREE;
 	
 	thread_t *t = &p->threads[0];
 	

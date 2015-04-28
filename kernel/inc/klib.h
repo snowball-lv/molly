@@ -29,6 +29,7 @@ void enable_ints();
 void disable_ints();
 
 const char *kstrchr(const char *str, int character);
+int strdiff(const char *str1, const char *str2);
 
 #define NAME(m) #m		
 		
