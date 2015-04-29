@@ -72,8 +72,10 @@ static RSDPDescriptor *find_rsdp() {
 }
 
 static ACPISDTHeader *get_rsdt(RSDPDescriptor *rsdp) {
-	if (rsdp->Revision == 0)
-		return (ACPISDTHeader *)rsdp->RsdtAddress;
+	if (rsdp->Revision == 0) {
+		ACPISDTHeader *rsdt = (ACPISDTHeader *)rsdp->RsdtAddress;
+		return rsdt;
+	}
 	panic("ACPI 2 not supported!");
 	return 0;
 }
@@ -88,8 +90,16 @@ void init_acpi() {
 		panic("RSDP not found!");
 		
 	ACPISDTHeader *rsdt = get_rsdt(rsdp);
-	kprintfln("rsdt addr: %d", (uintptr_t)rsdt / 1024);
+	
 	kprintfln("rsdt sig: %s", rsdt->Signature);
+	
+	size_t sum = chksum(rsdt, rsdt->Length);
+	kprintfln("sum: %x", sum);
+	sum &= 0xff;
+	
+	if (sum != 0)
+		panic("RSDT not valid!");
+	
 }
 
 
