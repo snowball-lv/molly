@@ -9,12 +9,6 @@ void *memcpy(void *destination, const void *source, size_t num) {
 	return destination;
 }
 
-void *memset(void *ptr, int value, size_t num) {
-	for (size_t i = 0; i < num; i++)
-		((unsigned char *)ptr)[i] = (unsigned char)value;
-	return ptr;
-}
-
 char *strcpy(char *destination, const char *source) {
 	char *dst = destination;
 	while (*source) {

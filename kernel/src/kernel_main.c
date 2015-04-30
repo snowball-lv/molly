@@ -92,7 +92,7 @@ void kernel_main(MemMap *mm) {
 	pmm_set_blocks(0, _4MB / PAGE_SIZE);
 
 	//remove lower mapping
-	//boot_pd.entries[0] = 0;
+	boot_pd.entries[0] = 0;
 	
 	//add recursive mapping (necessary for kalloc)
 	pde_t *last = &boot_pd.entries[1023];
@@ -107,6 +107,8 @@ void kernel_main(MemMap *mm) {
 	}
 	
 	reloadPDBR();
+	
+	/* deal with ACPI later
 	
 	//map acpi memory
 	for (size_t i = 0; i < mm->size; i++) {
@@ -126,6 +128,7 @@ void kernel_main(MemMap *mm) {
 			map_page(ptr, ptr, PTE_P | PTE_RW);
 		}
 	}
+	*/
 	
 	//init kernel heap allocator
 	init_kalloc();
@@ -143,7 +146,7 @@ void kernel_main(MemMap *mm) {
 	init_syscall();
 	
 	//set up acpi
-	init_acpi();
+	//init_acpi();
 	
 	//set up keyboard
 	init_kbd();

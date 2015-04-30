@@ -48,6 +48,11 @@ size_t strcspn(const char *str1, const char *str2) {
 	return len1;
 }
 
+void *memset(void *ptr, int value, size_t num) {
+	for (size_t i = 0; i < num; i++)
+		((unsigned char *)ptr)[i] = (unsigned char)value;
+	return ptr;
+}
 
 
 
