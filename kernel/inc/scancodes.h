@@ -15,6 +15,7 @@ void get_key(int scancode, key_event *e);
 char get_ascii(int key);
 
 #define KEY_NONE	0
+#define KEY_BAD		0
 
 #define KEY_A	'a'
 #define KEY_B	'b'
@@ -32,10 +33,10 @@ char get_ascii(int key);
 #define KEY_N	'n'
 #define KEY_O	'o'
 #define KEY_P	'p'
-#define KEY_Q	'w'
-#define KEY_R	't'
-#define KEY_S	'd'
-#define KEY_T	'y'
+#define KEY_Q	'q'
+#define KEY_R	'r'
+#define KEY_S	's'
+#define KEY_T	't'
 #define KEY_U	'u'
 #define KEY_V	'v'
 #define KEY_W	'w'
@@ -81,7 +82,7 @@ char get_ascii(int key);
 #define KEY_R_ALT	0
 
 #define KEY_R_APPS		0
-#define KEY_R_ENTER		'\r'
+#define KEY_R_ENTER		'\n'
 #define KEY_R_ESC		0
 
 #define KEY_F1		0

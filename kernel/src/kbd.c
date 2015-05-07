@@ -35,15 +35,17 @@ static void write_data(uint8_t byte) {
 }
 
 static void kbd_isr(trapframe_t *tf) {
-
 	int scancode = read_data();
+	//kprintfln("kbd event: %x", scancode);
+
 	key_event e;
 	get_key(scancode, &e);
 	
-	char c = get_ascii(e.key);
-	kprintf("%c", c);
-	
-	//kprintfln("kbd event: %x", scancode);
+	if (e.event == E_MAKE) {
+		char c = get_ascii(e.key);
+		if (c != 0)
+			kprintf("%c", c);
+	}
 }
 
 #define CMD_SCAN_CODE		0xf0
