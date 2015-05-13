@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <console.h>
 
 #define ALIGN_RIGHT(v, a)	\
 	(((v) + (a) - 1) & ~((a) - 1))
@@ -23,13 +24,17 @@ clock_t clock();
 
 void sleep(uintmax_t millis);
 
-void panic(const char *msg);
+#define panic(args...) \
+	(kprintfln(args), stop())
 
 void enable_ints();
 void disable_ints();
 
+char *kstrdup(char *str);
+
 const char *kstrchr(const char *str, int character);
 int strdiff(const char *str1, const char *str2);
+char *path_rem(char *path, char *dev);
 
 #define NAME(m) #m		
 		

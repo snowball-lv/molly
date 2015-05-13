@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <param.h>
+#include <devfs.h>
+#include <vfs.h>
 
 #define VGA_MEM 		(0xb8000 + KERNEL_OFF)
 #define WIDTH 			(80)
@@ -203,7 +205,21 @@ void kprintf(const char *format, ...) {
 	va_end(args);
 }
 
+static int console_open(vnode *vn, char *path) {
+	kprintfln("console open: [%s]", path);
+	return 0;
+}
 
+static vnode console = {
+
+	.open = console_open
+
+};
+
+void init_console() {
+	kprintfln("inti console");
+	dev_add("console", &console);
+}
 
 
 

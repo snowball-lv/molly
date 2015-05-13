@@ -266,15 +266,13 @@ static void sys_write(trapframe_t *tf) {
 	
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
+
+	vnode *vn = fh->vn;
 	
-	vnode *vn 	= fh->vn;
-	idrvr *fs 	= vn->drvr;
-	fs_node *fn = vn->fn;
+	//int r = fs->write(fn, (void *)buff, fh->off, count);
+	//fh->off += r;
 	
-	int ret = fs->write(fn, (void *)buff, fh->off, count);
-	fh->off += ret;
-	
-	RET(tf, ret);
+	RET(tf, 0);
 }
 
 

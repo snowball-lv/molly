@@ -40,7 +40,7 @@ static void kbd_isr(trapframe_t *tf) {
 
 	key_event e;
 	get_key(scancode, &e);
-	
+
 	if (e.event == E_MAKE) {
 		char c = get_ascii(e.key);
 		if (c != 0)
@@ -70,14 +70,14 @@ static void command(int code) {
 
 void init_kbd() {
 	kprintfln("init kbd");
-	
+
 	//disable controllers
 	command(CMD_DISABLE_1ST);
 	command(CMD_DISABLE_2ND);
-	
+
 	//flush out buffer
 	in8(DATA_PORT);
-	
+
 	//read config byte
 	command(CMD_READ_CONF);
 	uint8_t conf = read_data();
@@ -85,23 +85,23 @@ void init_kbd() {
 	conf &= !0b00100011; //disable INTs and translation
 	command(CMD_WRITE_CONF);
 	write_data(conf);
-	
+
 	//test controller
 	command(CMD_TEST_PS2);
 	uint8_t test = read_data();
 	kprintfln("ps/2 test: %x", test);
-	
+
 	if (test != PS2_PASS)
 		panic("ps/2 controller failed test!");
-	
+
 	//test first port
 	command(CMD_TEST_PORT_1);
 	test = read_data();
 	kprintfln("port 1 test: %x", test);
-	
+
 	if (test != PORT_1_PASS)
 		panic("ps/2 port 1 failed test!");
-	
+
 	//enable first port and INTs
 	command(CMD_READ_CONF);
 	conf = read_data();
@@ -109,33 +109,14 @@ void init_kbd() {
 	command(CMD_WRITE_CONF);
 	write_data(conf);
 	command(CMD_ENABLE_1ST);
-	
+
 	//assume scan code set 2
-	
+
 	//set kbd isr
 	set_isr(IRQ_BASE + IRQ_KBD, kbd_isr);
-	
+
 	//enable kbd
 	uint8_t mask = pic_read_data(PIC_MASTER);
 	mask &= ~(1 << IRQ_KBD);
 	pic_write_data(PIC_MASTER, mask);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

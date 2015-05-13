@@ -46,82 +46,82 @@ void kernel_main(MemMap *mm) {
 	uintptr_t bss_start = (uintptr_t)&_BSS_START;
 	uintptr_t bss_end	= (uintptr_t)&_BSS_END;
 	memset((void *)bss_start, 0, bss_end - bss_start);
-	
+
 	console_clear();
-	
+
 	kprintfln("running kernel");
-	
+
 	//set up gdt
 	init_gdt();
-	
+
 	//init physical memory
 	init_pmm();
-	
+
 	//free available blocks from memory map
 	for (size_t i = 0; i < mm->size; i++) {
-	
+
 		MemMapEntry *e = &mm->entries[i];
-			
+
 		uint32_t base = (uint32_t)e->base;
 		uint32_t size = (uint32_t)e->size;
-		
+
 		kprintfln(	"%d: %d -> %d",
 					e->type,
 					base / 1024,
 					(base + size) / 1024);
-			
+
 		if (e->type != MMAP_AVAILABLE)
 			continue;
-			
+
 		//assert the memory regions are 4k aligned
 		ASSERT_PAGE_ALIGNED(e->base);
 		ASSERT_PAGE_ALIGNED(e->size);
-			
+
 		size_t first = e->base / PAGE_SIZE;
 		size_t count = e->size / PAGE_SIZE;
-		
+
 		pmm_unset_blocks(first, count);
 	}
-	
+
 	//alloc 1M + kernel (esp at 0x7ffff)
 	uintptr_t kend_phys = (uintptr_t)&_KERNEL_END - KERNEL_BASE;
 	kprintfln("kernel size: %d kb", kend_phys / 1024);
 	//pmm_set_blocks(0, kend_phys / PAGE_SIZE);
-	
+
 	//alloc 4mb
 	pmm_set_blocks(0, _4MB / PAGE_SIZE);
 
 	//remove lower mapping
 	boot_pd.entries[0] = 0;
-	
+
 	//add recursive mapping (necessary for kalloc)
 	pde_t *last = &boot_pd.entries[1023];
 	*last = (uintptr_t)&boot_pd - KERNEL_OFF;
 	*last |= PTE_P | PTE_RW;
-	
-	//allocate kernel PDEs
+
+	//allocate kernel PDEs (necessary for new processes)
 	for (int i = 768 + 1; i < 1023; i++) {
 		pde_t *pde = &boot_pd.entries[i];
 		*pde = (uintptr_t)pmm_alloc_block();
 		*pde |= PTE_P | PTE_RW;
 	}
-	
+
 	reloadPDBR();
-	
+
 	/* deal with ACPI later
-	
+
 	//map acpi memory
 	for (size_t i = 0; i < mm->size; i++) {
-	
+
 		MemMapEntry *e = &mm->entries[i];
-			
+
 		if (e->type != MMAP_RECLAIM)
 			continue;
-			
+
 		//assert the memory regions are 4k aligned
 		ASSERT_PAGE_ALIGNED(e->base);
 		ASSERT_PAGE_ALIGNED(e->size);
-	
+
 		char *ptr = (char *)(uintptr_t)e->base;
 		char *end = ptr + e->size;
 		for (; ptr < end; ptr += PAGE_SIZE) {
@@ -129,44 +129,47 @@ void kernel_main(MemMap *mm) {
 		}
 	}
 	*/
-	
+
 	//init kernel heap allocator
 	init_kalloc();
-	
+
 	//set up idt and interrupt handlers
 	init_idt();
-	
+
 	//set up pic
 	init_pic();
-	
+
 	//set up pit
 	init_pit();
-	
+
 	//set up syscalls
 	init_syscall();
-	
+
+	//set up vfs
+	init_vfs();
+
+	//init and mount device fs/manager
+	init_devfs();
+
+	//register console device
+	init_console();
+
 	//set up acpi
 	//init_acpi();
-	
+
 	//set up keyboard
-	init_kbd();
-	
+	//init_kbd();
+
 	//enable interrupts
 	enable_ints();
-	
-	//set up vfs, devfs and other shit
-	//init_vfs();
-	
+
 	//start first user process
-	//run_init();
-	
+	run_init();
+
 	//init_pci();
-	
-	//switch to user mode
-	//user_mode();
-	
+
 	kprintfln("booted");
-	
+
 	while(1);
 }
 
@@ -184,35 +187,15 @@ void user_main() {
 	mkt(thread);
 	yield();
 	log("back in user-main");
-	
+
 	if (fork() != 0) {
 		log("in parent proc");
 		yieldp();
 	} else {
 		log("in child proc");
 	}
-	
+
 	log("after fork");
-	
+
 	while(1);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

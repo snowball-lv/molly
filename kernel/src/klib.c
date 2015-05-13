@@ -1,6 +1,8 @@
 #include <klib.h>
 #include <pit.h>
 #include <console.h>
+#include <kalloc.h>
+#include <string.h>
 
 void halt() {
 	__asm__("hlt");
@@ -9,11 +11,6 @@ void halt() {
 void stop() {
 	__asm__("cli");
 	__asm__("hlt");
-}
-
-void panic(const char *msg) {
-	kprintfln(msg);
-	stop();
 }
 
 void enable_ints() {
@@ -28,6 +25,13 @@ const char *kstrchr(const char *str, int character) {
 	while (*str != 0 && *str != character)
 		str++;
 	return str;
+}
+
+char *kstrdup(char *str) {
+	size_t len = strlen(str);
+	char *dup = kmalloc(len + 1);
+	strcpy(dup, str);
+	return dup;
 }
 
 int strdiff(const char *str1, const char *str2) {
@@ -48,6 +52,10 @@ int strdiff(const char *str1, const char *str2) {
 	return i;
 }
 
+char *path_rem(char *path, char *dev) {
+	int diff = strdiff(path, dev);
+	return &path[diff];
+}
 
 
 

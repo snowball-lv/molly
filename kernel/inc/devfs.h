@@ -2,4 +2,5 @@
 
 #include <vfs.h>
 
-extern idrvr devfs_drvr;
+void init_devfs();
+void dev_add(char *name, vnode *vn);

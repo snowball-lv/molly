@@ -50,6 +50,12 @@ task :default do
 	puts "Success"
 end
 
+task :kernel do
+	Dir.chdir("kernel") do
+		ruby "-S", "rake"
+	end
+end
+
 task :clean do
 
 	Dir.chdir("boot") do

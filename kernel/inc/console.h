@@ -10,4 +10,4 @@ void kprintf(const char *format, ...);
 #define kprintfln(args...) \
 	(kprintf(args), kprintf("%c", LF))
 	
-	
+void init_console();
