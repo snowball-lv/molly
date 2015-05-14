@@ -203,42 +203,43 @@ static void sys_exec(trapframe_t *tf) {
 	RET(tf, ret);
 }
 
+static int find_free_handle(proc_t *p) {
+
+	for (int i = 0; i < MAX_FILES; i++) {
+
+		file_handle *fh = &p->files[i];
+
+		if (fh->state == S_FREE)
+			return i;
+	}
+
+	return -1;
+}
+
 static void sys_open(trapframe_t *tf) {
 	char *path = ARG(tf, 0, char *);
 	kprintfln("open: %s", path);
-	
+
 	proc_t *p = cproc();
-	int index = -1;
-	
-	for (int i = 0; i < MAX_FILES; i++) {
-		file_handle *fh = &p->files[i];
-		if (fh->state == S_FREE) {
-			index = i;
-			break;
-		}
-	}
-	
-	if (index == -1) {
-		RET(tf, -1);
-		return;
-	}
+	int fhi = find_free_handle(p);
+
+	if (fhi < 0)
+		panic("out of free file handles");
 	
 	vnode *vn = vfs_open(path);
 	
-	if (vn == 0) {
-		RET(tf, -1);
-		return;
-	}
-	
-	file_handle *fh = &p->files[index];
+	if (vn == 0)
+		panic("file not found: [%s]", path);
+
+	file_handle *fh = &p->files[fhi];
 	
 	fh->state 	= S_USED;
 	fh->vn 		= vn;
 	fh->off		= 0;
 	
-	kprintfln("opened fd: %d", index);
+	kprintfln("opened fd: %d", fhi);
 	
-	RET(tf, index);
+	RET(tf, fhi);
 }
 
 static void sys_exit(trapframe_t *tf) {
@@ -247,35 +248,39 @@ static void sys_exit(trapframe_t *tf) {
 
 static void sys_close(trapframe_t *tf) {
 	int fd = ARG(tf, 0, int);
+	kprintfln("close fd: %d", fd);
 	
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
+
+	vfs_close(fh->vn);
+
 	fh->state = S_FREE;
 	
-	kprintfln("closed fd: %d", fd);
 	RET(tf, 0);
 }
 
 static void sys_write(trapframe_t *tf) {
 
 	int fd = ARG(tf, 0, int);
-	const void *buff = ARG(tf, 1, const void *);
+	void *buff = ARG(tf, 1, void *);
 	int count = ARG(tf, 2, int);
 	
-	kprintfln("write fd:", fd);
+	kprintfln("write fd: %d", fd);
 	
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
 
 	vnode *vn = fh->vn;
 	
-	//int r = fs->write(fn, (void *)buff, fh->off, count);
-	//fh->off += r;
+	//int r = vfs_write(vn, buff, fh->off, count);
+	int r = 0;
 	
-	RET(tf, 0);
+	if (r > -1)
+		fh->off += r;
+	
+	RET(tf, r);
 }
-
-
 
 
 

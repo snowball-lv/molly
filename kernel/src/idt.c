@@ -155,6 +155,7 @@ static char is_irq_spurious(uint32_t num) {
 void isr_common(trapframe_t *tf) {
 	
 	//irq spurious
+	//TO DO: move to bottom, ACKs too soon
 	if (is_irq_spurious(tf->num)) {
 		if (is_irq_slave(tf->num))
 			pic_eoi(PIC_MASTER);

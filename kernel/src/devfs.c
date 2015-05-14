@@ -2,6 +2,7 @@
 #include <console.h>
 #include <kalloc.h>
 #include <klib.h>
+#include <vfs.h>
 
 #define MAX_DEVICES 	16
 #define S_FREE			1

@@ -11,6 +11,7 @@ void run_init();
 typedef void (*entry_f)(int argc, char **argv);
 
 typedef struct {
+	
 	int 	state;
 	int 	*ustack;
 	int 	*usp;
@@ -18,6 +19,7 @@ typedef struct {
 	int 	*ktop;
 	int 	*ksp;
 	entry_f entry;
+
 } thread_t;
 
 void set_up_thread(thread_t *t, entry_f entry);
@@ -28,6 +30,7 @@ void set_up_thread(thread_t *t, entry_f entry);
 #define MAX_FILES		16
 
 typedef struct {
+
 	int 		state;
 	pd_t		*pd;
 	void 		*brk;
@@ -35,6 +38,7 @@ typedef struct {
 	int 		ct_num;
 	char 		*cwd;
 	file_handle	files[MAX_FILES];
+
 } proc_t;
 
 proc_t *cproc();

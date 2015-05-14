@@ -151,14 +151,14 @@ void kernel_main(MemMap *mm) {
 	//init and mount device fs/manager
 	init_devfs();
 
-	//register console device
+	//register vga and console devices
 	init_console();
 
 	//set up acpi
 	//init_acpi();
 
-	//set up keyboard
-	//init_kbd();
+	//set up keyboard and kbd device
+	init_kbd();
 
 	//enable interrupts
 	enable_ints();

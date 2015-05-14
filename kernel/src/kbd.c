@@ -8,6 +8,9 @@
 #include <klib.h>
 #include <acpi.h>
 #include <scancodes.h>
+#include <vfs.h>
+#include <devfs.h>
+#include <sync.h>
 
 #define DATA_PORT 		0x60
 #define STATUS_REG		0x64
@@ -34,10 +37,18 @@ static void write_data(uint8_t byte) {
 	out8(DATA_PORT, byte);
 }
 
+#define KBD_BUFF_SIZE	4096
+
+static uint8_t 	kbd_buffer[KBD_BUFF_SIZE];
+static int 		kbd_buff_index = 0;
+
+static spinlock_t kbd_lock;
+
 static void kbd_isr(trapframe_t *tf) {
 	int scancode = read_data();
-	//kprintfln("kbd event: %x", scancode);
+	kprintfln("kbd event: %x", scancode);
 
+	/*
 	key_event e;
 	get_key(scancode, &e);
 
@@ -46,6 +57,7 @@ static void kbd_isr(trapframe_t *tf) {
 		if (c != 0)
 			kprintf("%c", c);
 	}
+	*/
 }
 
 #define CMD_SCAN_CODE		0xf0
@@ -70,6 +82,9 @@ static void command(int code) {
 
 void init_kbd() {
 	kprintfln("init kbd");
+
+	//init mutex
+	spinlock_init(&kbd_lock);
 
 	//disable controllers
 	command(CMD_DISABLE_1ST);

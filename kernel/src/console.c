@@ -5,6 +5,7 @@
 #include <param.h>
 #include <devfs.h>
 #include <vfs.h>
+#include <kalloc.h>
 
 #define VGA_MEM 		(0xb8000 + KERNEL_OFF)
 #define WIDTH 			(80)
@@ -74,40 +75,6 @@ static void putc(char character) {
 static void puts(const char *str) {
 	while (*str != 0)
 		putc(*str++);
-}
-
-//don't touch
-static char *itoa2(int value, char *str, int base) {
-    char *rc;
-    char *ptr;
-    char *low;
-    // Check for supported base.
-    if (base < 2 || base > 36) {
-		*str = 0;
-        return str;
-    }
-    rc = ptr = str;
-    // Set '-' for negative decimals.
-    if (value < 0 && base == 10) {
-        *ptr++ = '-';
-    }
-    // Remember where the numbers start.
-    low = ptr;
-    // The actual conversion.
-    do {
-        // Modulo is negative for negative value. This trick makes abs() unnecessary.
-        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"[35 + value % base];
-        value /= base;
-    } while (value);
-    // Terminating the string.
-    *ptr-- = 0;
-    // Invert the numbers.
-    while (low < ptr) {
-        char tmp = *low;
-        *low++ = *ptr;
-        *ptr-- = tmp;
-    }
-    return rc;
 }
 
 /**
@@ -205,22 +172,107 @@ void kprintf(const char *format, ...) {
 	va_end(args);
 }
 
-static int console_open(vnode *vn, char *path) {
-	kprintfln("console open: [%s]", path);
-	return 0;
-}
+static int console_open(vnode *vn, char *path);
+static int console_close(fs_node *fn);
+static int console_write(fs_node *fn, void *buff, size_t off, int count);
 
 static vnode console = {
 
-	.open = console_open
+	.open = console_open,
+	.close = console_close,
+	.write = console_write
 
 };
 
-void init_console() {
-	kprintfln("inti console");
-	dev_add("console", &console);
+typedef struct {
+
+	vnode *vga;
+
+} console_node;
+
+static int console_open(vnode *vn, char *path) {
+	kprintfln("console open: [%s]", path);
+
+	vnode *vga = vfs_open("#vga");
+
+	if (vga == 0)
+		panic("vga device not found");
+
+	console_node *cn = kmalloc(sizeof(console_node));
+	cn->vga = vga;
+
+	vn->fn 		= cn;
+
+	vn->open 	= console_open;
+	vn->close 	= console_close;
+	vn->write 	= console_write;
+
+	return 1;
 }
 
+static int console_close(fs_node *fn) {
+	kprintfln("console close");
+
+	console_node *cn = (console_node *)fn;
+	vfs_close(cn->vga);
+
+	return 1;
+}
+
+static int console_write(fs_node *fn, void *buff, size_t off, int count) {
+	kprintfln("console write");
+
+	console_node *cn = (console_node *)fn;
+	vnode *vga = cn->vga;
+
+	return vfs_write(vga, buff, off, count);
+}
+
+static int vga_open(vnode *vn, char *path);
+static int vga_close(fs_node *fn);
+static int vga_write(fs_node *fn, void *buff, size_t off, int count);
+
+static vnode vga = {
+
+	.open 	= vga_open,
+	.close 	= vga_close,
+	.write 	= vga_write
+
+};
+
+static int vga_open(vnode *vn, char *path) {
+	kprintfln("vga open: [%s]", path);
+
+	vn->fn = 0;
+
+	vn->open 	= vga_open;
+	vn->close 	= vga_close;
+	vn->write 	= vga_write;
+
+	return 1;
+}
+
+static int vga_close(fs_node *fn) {
+	kprintfln("vga close");
+	return 1;
+}
+
+static int vga_write(fs_node *fn, void *buff, size_t off, int count) {
+	kprintfln("vga write");
+
+	char *cbuff = buff;
+	for (int i = 0; i < count; i++)
+		kprintf("%c", cbuff[i]);
+
+	return count;
+}
+
+void init_console() {
+	kprintfln("init console");
+
+	dev_add("vga", &vga);
+	dev_add("console", &console);
+}
 
 
 
