@@ -10,7 +10,7 @@
 #include <scancodes.h>
 #include <vfs.h>
 #include <devfs.h>
-#include <sync.h>
+#include <pipe.h>
 
 #define DATA_PORT 		0x60
 #define STATUS_REG		0x64
@@ -37,16 +37,14 @@ static void write_data(uint8_t byte) {
 	out8(DATA_PORT, byte);
 }
 
-#define KBD_BUFF_SIZE	4096
-
-static uint8_t 	kbd_buffer[KBD_BUFF_SIZE];
-static int 		kbd_buff_index = 0;
-
-static spinlock_t kbd_lock;
+static vnode *kbd_pipe;
 
 static void kbd_isr(trapframe_t *tf) {
 	int scancode = read_data();
-	kprintfln("kbd event: %x", scancode);
+	//kprintfln("kbd event: %x", scancode);
+
+	uint8_t buff[1] = { scancode };
+	vfs_write(kbd_pipe, buff, 0, 1);
 
 	/*
 	key_event e;
@@ -82,9 +80,6 @@ static void command(int code) {
 
 void init_kbd() {
 	kprintfln("init kbd");
-
-	//init mutex
-	spinlock_init(&kbd_lock);
 
 	//disable controllers
 	command(CMD_DISABLE_1ST);
@@ -126,6 +121,10 @@ void init_kbd() {
 	command(CMD_ENABLE_1ST);
 
 	//assume scan code set 2
+
+	//set up pipe
+	kbd_pipe = make_pipe();
+	dev_add("kbd", kbd_pipe);
 
 	//set kbd isr
 	set_isr(IRQ_BASE + IRQ_KBD, kbd_isr);

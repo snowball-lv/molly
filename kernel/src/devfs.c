@@ -59,22 +59,20 @@ static dev_t *find_dev(char *path) {
 	return 0;
 }
 
-static int devfs_open(vnode *vn, char *path) {
-	kprintfln("devfs open: [%s]", path);
+static vnode *devfs_get_vnode(char *path) {
+	kprintfln("devfs get vnode: [%s]", path);
 
 	dev_t *dev = find_dev(path);
 
 	if (dev == 0)
 		panic("device not found: [%s]", path);
 
-	char *rem = path_rem(path, dev->name);
-
-	return dev->vn->open(vn, rem);
+	return dev->vn;
 }
 
 static vnode devfs = {
 
-	.open = devfs_open
+	.get_vnode = devfs_get_vnode
 
 };
 

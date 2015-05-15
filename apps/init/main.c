@@ -7,8 +7,11 @@ int main(int argc, char **argv) {
 	
 	int f = open("#console");
 
-	//char *msg = "sent through write\n";
-	//write(f, msg, strlen(msg));
+	char buff[1];
+	while (read(f, buff, 1) > 0) {
+		log("user read");
+		//write(f, buff, 1);
+	}
 
 	close(f);
 

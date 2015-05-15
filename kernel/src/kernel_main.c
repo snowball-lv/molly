@@ -15,6 +15,7 @@
 #include <pit.h>
 #include <kbd.h>
 #include <acpi.h>
+#include <devfs.h>
 
 //not used
 //leave for linking with molly's libc
@@ -151,14 +152,14 @@ void kernel_main(MemMap *mm) {
 	//init and mount device fs/manager
 	init_devfs();
 
-	//register vga and console devices
-	init_console();
-
 	//set up acpi
 	//init_acpi();
 
 	//set up keyboard and kbd device
 	init_kbd();
+
+	//register vga and console devices
+	init_console();
 
 	//enable interrupts
 	enable_ints();

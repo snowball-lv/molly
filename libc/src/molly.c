@@ -60,7 +60,9 @@ int write(int fd, const void *buff, int count) {
 	return syscall_do(SYS_WRITE, fd, buff, count);
 }
 
-
+int	read(int fd, const void *buff, int count) {
+	return syscall_do(SYS_READ, fd, buff, count);
+}
 
 
 

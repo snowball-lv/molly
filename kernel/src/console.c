@@ -172,40 +172,46 @@ void kprintf(const char *format, ...) {
 	va_end(args);
 }
 
-static int console_open(vnode *vn, char *path);
+static int console_open(vnode *vn);
 static int console_close(fs_node *fn);
 static int console_write(fs_node *fn, void *buff, size_t off, int count);
+static int console_read(fs_node *fn, void *buff, size_t off, int count);
 
 static vnode console = {
 
 	.open = console_open,
 	.close = console_close,
-	.write = console_write
+	.write = console_write,
+	.read = console_read
 
 };
 
 typedef struct {
 
 	vnode *vga;
+	vnode *kbd;
 
 } console_node;
 
-static int console_open(vnode *vn, char *path) {
-	kprintfln("console open: [%s]", path);
+static int console_open(vnode *vn) {
+	kprintfln("console open");
 
 	vnode *vga = vfs_open("#vga");
 
 	if (vga == 0)
 		panic("vga device not found");
 
+	vnode *kbd = vfs_open("#kbd");
+
+	if (kbd == 0)
+		panic("kbd device not found");
+
 	console_node *cn = kmalloc(sizeof(console_node));
+
 	cn->vga = vga;
+	cn->kbd = kbd;
 
-	vn->fn 		= cn;
-
-	vn->open 	= console_open;
-	vn->close 	= console_close;
-	vn->write 	= console_write;
+	vn->fn = cn;
 
 	return 1;
 }
@@ -215,6 +221,9 @@ static int console_close(fs_node *fn) {
 
 	console_node *cn = (console_node *)fn;
 	vfs_close(cn->vga);
+	vfs_close(cn->kbd);
+
+	kfree(cn);
 
 	return 1;
 }
@@ -228,7 +237,16 @@ static int console_write(fs_node *fn, void *buff, size_t off, int count) {
 	return vfs_write(vga, buff, off, count);
 }
 
-static int vga_open(vnode *vn, char *path);
+static int console_read(fs_node *fn, void *buff, size_t off, int count) {
+	kprintfln("console read");
+
+	console_node *cn = (console_node *)fn;
+	vnode *kbd = cn->kbd;
+
+	return vfs_read(kbd, buff, off, count);
+}
+
+static int vga_open(vnode *vn);
 static int vga_close(fs_node *fn);
 static int vga_write(fs_node *fn, void *buff, size_t off, int count);
 
@@ -240,15 +258,8 @@ static vnode vga = {
 
 };
 
-static int vga_open(vnode *vn, char *path) {
-	kprintfln("vga open: [%s]", path);
-
-	vn->fn = 0;
-
-	vn->open 	= vga_open;
-	vn->close 	= vga_close;
-	vn->write 	= vga_write;
-
+static int vga_open(vnode *vn) {
+	kprintfln("vga open");
 	return 1;
 }
 

@@ -14,6 +14,7 @@
 #define SYS_EXIT		(10)
 #define SYS_CLOSE		(11)
 #define SYS_WRITE		(12)
+#define SYS_READ		(13)
 
 void 	log		(const char *msg);
 void 	*sbrk	(int size);
@@ -28,6 +29,7 @@ void 	exit	();
 int 	open	(char *path);
 int		close	(int fd);
 int		write	(int fd, const void *buff, int count);
+int		read	(int fd, const void *buff, int count);
 
 
 

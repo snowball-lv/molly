@@ -18,7 +18,7 @@ typedef struct {
 
 	int 	state;
 	char 	*path;
-	vnode 	*vn;
+	vnode 	*fs;
 
 } mount_point;
 
@@ -26,7 +26,7 @@ typedef struct {
 
 	int 	state;
 	char 	*path;
-	vnode 	vn;
+	vnode 	*vn;
 
 } file_table_entry;
 
@@ -127,13 +127,23 @@ vnode *vfs_open(char *path) {
 
 	char *rem = path_rem(path, mp->path);
 	kprintfln("rem: %s", rem);
-	int r = mp->vn->open(&fte->vn, rem);
 
-	if (r != 0) {
+	vnode *vn = mp->fs->get_vnode(rem);
 
+	if (vn == 0)
+		panic("no node for: [%s]", path);
+
+	if (vn->open(vn) == 1) {
+
+		fte->vn 	= vn;
 		fte->path 	= kstrdup(path);
 
-		return &fte->vn;
+		return vn;
+		
+	} else {
+
+		panic("couldn't open file: [%s]", path);
+
 	}
 
 	//release fte
@@ -151,7 +161,7 @@ static file_table_entry *find_fte(vnode *vn) {
 		if (fte->state == S_FREE)
 			continue;
 
-		if (&fte->vn == vn)
+		if (fte->vn == vn)
 			return fte;
 	}
 
@@ -176,12 +186,19 @@ void vfs_close(vnode *vn) {
 
 int vfs_write(vnode *vn, void *buff, size_t off, int count) {
 
-	int r= vn->write(vn->fn, buff, off, count);
+	int r = vn->write(vn->fn, buff, off, count);
 
 	return r;
 }
 
-void vfs_mount(char *path, vnode *vn) {
+int vfs_read(vnode *vn, void *buff, size_t off, int count) {
+
+	int r = vn->read(vn->fn, buff, off, count);
+
+	return r;
+}
+
+void vfs_mount(char *path, vnode *fs) {
 
 	mount_point *mp = get_mp_slot();
 
@@ -190,7 +207,7 @@ void vfs_mount(char *path, vnode *vn) {
 
 	mp->state 	= S_USED;
 	mp->path 	= kstrdup(path);
-	mp->vn 		= vn;
+	mp->fs 		= fs;
 }
 
 
