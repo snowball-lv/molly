@@ -271,9 +271,9 @@ static int vga_close(fs_node *fn) {
 static int vga_write(fs_node *fn, void *buff, size_t off, int count) {
 	kprintfln("vga write");
 
-	char *cbuff = buff;
+	uint8_t *cbuff = buff;
 	for (int i = 0; i < count; i++)
-		kprintf("%c", cbuff[i]);
+		kprintfln("%x", cbuff[i]);
 
 	return count;
 }

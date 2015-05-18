@@ -69,7 +69,13 @@ static int pipe_write(fs_node *fn, void *buff, size_t off, int count) {
 
 	int written = 0;
 
+	int ints = read_flags() & FLAG_INTERRUPTS;
+
 	while (written != count) {
+
+		if (ints)
+			disable_ints();
+
 		spinlock_lock(&pn->lock);
 
 		if (pipe_space(pn) == 0)
@@ -82,6 +88,10 @@ static int pipe_write(fs_node *fn, void *buff, size_t off, int count) {
 		}
 
 		spinlock_unlock(&pn->lock);
+
+		if (ints)
+			enable_ints();
+
 	}
 
 	return written;
@@ -104,7 +114,13 @@ static int pipe_read(fs_node *fn, void *buff, size_t off, int count) {
 
 	int read = 0;
 
+	int ints = read_flags() & FLAG_INTERRUPTS;
+
 	while (read != count) {
+
+		if (ints)
+			disable_ints();
+
 		spinlock_lock(&pn->lock);
 
 		//kprintfln("r: %d, w: %d", pn->read_pos, pn->write_pos);
@@ -118,6 +134,9 @@ static int pipe_read(fs_node *fn, void *buff, size_t off, int count) {
 		}
 
 		spinlock_unlock(&pn->lock);
+
+		if (ints)
+			enable_ints();
 	}
 
 	return read;

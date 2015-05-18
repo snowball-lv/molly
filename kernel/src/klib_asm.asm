@@ -40,13 +40,28 @@ _read_flags:
 	add esp, 4
 	ret
 	
-	
-	
-	
-	
-	
-	
-	
+;int cas(int *ptr, int oldval, int newval);
+global _cas
+_cas:
+	push ebp
+	mov ebp, esp
+
+	mov ecx, [ebp + 8]	; *ptr
+	mov eax, [ebp + 12]	; oldval
+	mov edx, [ebp + 16]	; newval
+
+	lock cmpxchg [ecx], edx
+
+	jz .true
+	.false:
+		mov eax, 0
+		jmp .end
+	.true:
+		mov eax, 1
+	.end:
+
+	pop ebp
+	ret
 	
 	
 	

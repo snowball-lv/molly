@@ -6,6 +6,8 @@
 #define ALIGN_RIGHT(v, a)	\
 	(((v) + (a) - 1) & ~((a) - 1))
 
+#define FLAG_INTERRUPTS		(1 << 9)
+
 uint32_t read_ebp();
 uint32_t read_esp();
 uint32_t read_eip();
@@ -35,6 +37,8 @@ char *kstrdup(char *str);
 const char *kstrchr(const char *str, int character);
 int strdiff(const char *str1, const char *str2);
 char *path_rem(char *path, char *dev);
+
+int cas(int *ptr, int oldval, int newval);
 
 #define NAME(m) #m		
 		

@@ -16,6 +16,7 @@
 #include <kbd.h>
 #include <acpi.h>
 #include <devfs.h>
+#include <klib.h>
 
 //not used
 //leave for linking with molly's libc
