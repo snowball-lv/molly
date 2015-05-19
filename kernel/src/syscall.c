@@ -12,6 +12,7 @@
 #include <gdt.h>
 #include <param.h>
 #include <pit.h>
+#include <debug.h>
 
 static void sys_log		(trapframe_t *tf);
 static void sys_sbrk	(trapframe_t *tf);
@@ -218,20 +219,27 @@ static int find_free_handle(proc_t *p) {
 	return -1;
 }
 
+#define SYSRET(value) { RET(tf, (value)); return; }
+
 static void sys_open(trapframe_t *tf) {
+
 	char *path = ARG(tf, 0, char *);
-	kprintfln("open: %s", path);
+	logfln("sys open: [%s]", path);
 
 	proc_t *p = cproc();
 	int fhi = find_free_handle(p);
 
-	if (fhi < 0)
-		panic("out of free file handles");
+	if (fhi < 0) {
+		logfln("out of free process file handles");
+		SYSRET(-1);
+	}
 	
 	vnode *vn = vfs_open(path);
 	
-	if (vn == 0)
-		panic("file not found: [%s]", path);
+	if (vn == 0) {
+		logfln("file not found: [%s]", path);
+		SYSRET(-1);
+	}
 
 	file_handle *fh = &p->files[fhi];
 	
@@ -239,9 +247,9 @@ static void sys_open(trapframe_t *tf) {
 	fh->vn 		= vn;
 	fh->off		= 0;
 	
-	kprintfln("opened fd: %d", fhi);
+	logfln("opened fd: %d", fhi);
 	
-	RET(tf, fhi);
+	SYSRET(fhi);
 }
 
 static void sys_exit(trapframe_t *tf) {
@@ -249,17 +257,18 @@ static void sys_exit(trapframe_t *tf) {
 }
 
 static void sys_close(trapframe_t *tf) {
+
 	int fd = ARG(tf, 0, int);
-	kprintfln("close fd: %d", fd);
+	logfln("close fd: %d", fd);
 	
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
 
-	vfs_close(fh->vn);
+	int rc = vfs_close(fh->vn);
 
 	fh->state = S_FREE;
 	
-	RET(tf, 0);
+	SYSRET(rc);
 }
 
 static void sys_write(trapframe_t *tf) {

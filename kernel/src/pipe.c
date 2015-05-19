@@ -3,8 +3,9 @@
 #include <kalloc.h>
 #include <sync.h>
 #include <klib.h>
+#include <debug.h>
 
-#define PIPE_SIZE	16
+#define PIPE_SIZE	8
 
 typedef struct {
 
@@ -18,7 +19,7 @@ typedef struct {
 } pipe_node;
 
 static int pipe_open(vnode *vn) {
-	kprintfln("pipe open");
+	logfln("pipe open");
 
 	pipe_node *pn = (pipe_node *)vn->fn;
 	spinlock_lock(&pn->lock);
@@ -29,7 +30,7 @@ static int pipe_open(vnode *vn) {
 }
 
 static int pipe_close(fs_node *fn) {
-	kprintfln("pipe close");
+	logfln("pipe close");
 
 	pipe_node *pn = (pipe_node *)fn;
 	spinlock_lock(&pn->lock);

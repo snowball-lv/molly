@@ -3,6 +3,7 @@
 #include <kalloc.h>
 #include <klib.h>
 #include <vfs.h>
+#include <debug.h>
 
 #define MAX_DEVICES 	16
 #define S_FREE			1
@@ -31,16 +32,20 @@ static dev_t *get_free_slot() {
 	return 0;
 }
 
-void dev_add(char *name, vnode *vn) {
+int dev_add(char *name, vnode *vn) {
 
 	dev_t *dev = get_free_slot();
 	
-	if (dev == 0)
-		panic("out of device slots!");
+	if (dev == 0) {
+		logfln("out of device slots!");
+		return -1;
+	}
 		
 	dev->state 	= S_USED;
 	dev->name 	= kstrdup(name);
 	dev->vn 	= vn;
+
+	return 1;
 }
 
 static dev_t *find_dev(char *path) {
@@ -60,12 +65,14 @@ static dev_t *find_dev(char *path) {
 }
 
 static vnode *devfs_get_vnode(char *path) {
-	kprintfln("devfs get vnode: [%s]", path);
+	logfln("devfs get vnode: [%s]", path);
 
 	dev_t *dev = find_dev(path);
 
-	if (dev == 0)
-		panic("device not found: [%s]", path);
+	if (dev == 0) {
+		logfln("device not found: [%s]", path);
+		return 0;
+	}
 
 	return dev->vn;
 }
@@ -81,7 +88,8 @@ void init_devfs() {
 	for (int i = 0; i < MAX_DEVICES; i++)
 		devices[i].state = S_FREE;
 
-	vfs_mount("#", &devfs);
+	if (vfs_mount("#", &devfs) == -1)
+		panic("*** couldn't mount devfs");
 }
 
 

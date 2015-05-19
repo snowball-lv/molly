@@ -6,6 +6,7 @@
 #include <devfs.h>
 #include <vfs.h>
 #include <kalloc.h>
+#include <debug.h>
 
 #define VGA_MEM 		(0xb8000 + KERNEL_OFF)
 #define WIDTH 			(80)
@@ -194,17 +195,21 @@ typedef struct {
 } console_node;
 
 static int console_open(vnode *vn) {
-	kprintfln("console open");
+	logfln("console open");
 
 	vnode *vga = vfs_open("#vga");
 
-	if (vga == 0)
-		panic("vga device not found");
+	if (vga == 0) {
+		logfln("vga device not found");
+		return -1;
+	}
 
 	vnode *kbd = vfs_open("#kbd");
 
-	if (kbd == 0)
-		panic("kbd device not found");
+	if (kbd == 0) {
+		logfln("kbd device not found");
+		return -1;
+	}
 
 	console_node *cn = kmalloc(sizeof(console_node));
 
@@ -217,15 +222,16 @@ static int console_open(vnode *vn) {
 }
 
 static int console_close(fs_node *fn) {
-	kprintfln("console close");
+	logfln("console close");
 
 	console_node *cn = (console_node *)fn;
-	vfs_close(cn->vga);
-	vfs_close(cn->kbd);
+
+	int rc0 = vfs_close(cn->vga);
+	int rc1 = vfs_close(cn->kbd);
 
 	kfree(cn);
 
-	return 1;
+	return (rc0 == 0 && rc1 == 0) ? 0 : -1;
 }
 
 static int console_write(fs_node *fn, void *buff, size_t off, int count) {
@@ -259,21 +265,21 @@ static vnode vga = {
 };
 
 static int vga_open(vnode *vn) {
-	kprintfln("vga open");
+	logfln("vga open");
 	return 1;
 }
 
 static int vga_close(fs_node *fn) {
-	kprintfln("vga close");
-	return 1;
+	logfln("vga close");
+	return 0;
 }
 
 static int vga_write(fs_node *fn, void *buff, size_t off, int count) {
-	kprintfln("vga write");
+	logfln("vga write");
 
 	uint8_t *cbuff = buff;
 	for (int i = 0; i < count; i++)
-		kprintfln("%x", cbuff[i]);
+		logfln("%x", cbuff[i]);
 
 	return count;
 }
@@ -281,8 +287,11 @@ static int vga_write(fs_node *fn, void *buff, size_t off, int count) {
 void init_console() {
 	kprintfln("init console");
 
-	dev_add("vga", &vga);
-	dev_add("console", &console);
+	if (dev_add("vga", &vga) == -1)
+		panic("*** couldn't add vga device");
+
+	if (dev_add("console", &console) == -1)
+		panic("*** couldn't add console device");
 }
 
 

@@ -6,6 +6,7 @@
 #include <paging.h>
 #include <pmm.h>
 #include <param.h>
+#include <debug.h>
 
 //extern none_t _HEAP_START;
 
@@ -54,7 +55,7 @@ void *kmalloc(size_t size) {
 }
 
 void kfree(void *ptr) {
-	kprintfln("kfree: %x", ptr);
+	logfln("kfree: %x", ptr);
 }
 
 

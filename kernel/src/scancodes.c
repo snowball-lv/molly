@@ -61,7 +61,7 @@ static int sc_to_key_map[] = {
 };
 	
 static int in_break = 0;
-	
+
 void get_key(int scancode, key_event *e) {
 
 	if (!in_break && scancode == 0xf0) {

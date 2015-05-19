@@ -11,6 +11,9 @@
 #include <vfs.h>
 #include <devfs.h>
 #include <pipe.h>
+#include <debug.h>
+#include <kalloc.h>
+#include <sync.h>
 
 #define DATA_PORT 		0x60
 #define STATUS_REG		0x64
@@ -37,26 +40,81 @@ static void write_data(uint8_t byte) {
 	out8(DATA_PORT, byte);
 }
 
-static vnode *kbd_pipe;
+#define KBD_BUFFER_SIZE		8
+
+static struct {
+
+	key_event 	buffer[KBD_BUFFER_SIZE];
+	int			write_pos;
+	int 		read_pos;
+
+} event_buffer;
 
 static void kbd_isr(trapframe_t *tf) {
 	int scancode = read_data();
 	//kprintfln("kbd event: %x", scancode);
 
-	uint8_t buff[1] = { scancode };
-	vfs_write(kbd_pipe, buff, 0, 1);
-
-	/*
 	key_event e;
 	get_key(scancode, &e);
 
-	if (e.event == E_MAKE) {
-		char c = get_ascii(e.key);
-		if (c != 0)
-			kprintf("%c", c);
-	}
-	*/
+	if (e.event == E_NONE)
+		return;
+
+	//check if buffer full
+	if (event_buffer.write_pos - 1 == event_buffer.read_pos)
+		return;
+
+	key_event *be = &event_buffer.buffer[event_buffer.write_pos];
+	event_buffer.write_pos++;
+	event_buffer.write_pos %= KBD_BUFFER_SIZE;
+
+	*be = e;
 }
+
+typedef struct {
+
+} kbd_node;
+
+static int kbd_next_event(fs_node *fn, key_event *e) {
+
+	//wait for kbd events
+	while (event_buffer.read_pos == event_buffer.write_pos);
+
+	key_event *be = &event_buffer.buffer[event_buffer.read_pos];
+	event_buffer.read_pos++;
+	event_buffer.read_pos %= KBD_BUFFER_SIZE;
+
+	*e = *be;
+
+	return 0;
+}
+
+static int kbd_open(vnode *vn) {
+	logfln("kbd open");
+
+	kbd_node *kn = kmalloc(sizeof(kbd_node));
+	vn->fn = kn;
+
+	return 1;
+}
+
+static int kbd_close(fs_node *fn) {
+	logfln("kbd close");
+
+	kbd_node *kn = (kbd_node *)fn;
+	kfree(kn);
+
+	return 0;
+}
+
+//input event device
+static vnode kbd = {
+
+	.open = kbd_open,
+	.close = kbd_close,
+	.next_event = kbd_next_event
+
+};
 
 #define CMD_SCAN_CODE		0xf0
 #define GET_SCAN_CODE		0
@@ -80,6 +138,10 @@ static void command(int code) {
 
 void init_kbd() {
 	kprintfln("init kbd");
+
+	//init event buffer
+	event_buffer.write_pos = 0;
+	event_buffer.read_pos = 0;
 
 	//disable controllers
 	command(CMD_DISABLE_1ST);
@@ -122,9 +184,9 @@ void init_kbd() {
 
 	//assume scan code set 2
 
-	//set up pipe
-	kbd_pipe = make_pipe();
-	dev_add("kbd", kbd_pipe);
+	//register kbd device
+	if (dev_add("kbd", &kbd) == -1)
+		panic("*** couldn't add kbd device");
 
 	//set kbd isr
 	set_isr(IRQ_BASE + IRQ_KBD, kbd_isr);

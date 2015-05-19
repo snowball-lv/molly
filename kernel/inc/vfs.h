@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string.h>
+#include <scancodes.h>
 
 typedef struct vnode vnode;
 typedef void fs_node;
@@ -22,6 +23,8 @@ struct vnode {
 	int (*write)(fs_node *fn, void *buff, size_t off, int count);
 	int (*read)(fs_node *fn, void *buff, size_t off, int count);
 
+	int (*next_event)(fs_node *fn, key_event *e);
+
 };
 
 typedef struct {
@@ -33,12 +36,12 @@ typedef struct {
 } file_handle;
 
 vnode *vfs_open(char *path);
-void vfs_close(vnode *vn);
+int vfs_close(vnode *vn);
 int vfs_write(vnode *vn, void *buff, size_t off, int count);
 int vfs_read(vnode *vn, void *buff, size_t off, int count);
 
 void init_vfs();
-void vfs_mount(char *path, vnode *fs);
+int vfs_mount(char *path, vnode *fs);
 
 
 
