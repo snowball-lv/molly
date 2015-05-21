@@ -81,9 +81,9 @@ char get_ascii(int key);
 #define KEY_R_GUI	0
 #define KEY_R_ALT	0
 
-#define KEY_R_APPS		0
-#define KEY_R_ENTER		'\n'
-#define KEY_R_ESC		0
+#define KEY_APPS	0
+#define KEY_ENTER	'\n'
+#define KEY_ESC		0
 
 #define KEY_F1		0
 #define KEY_F2		0

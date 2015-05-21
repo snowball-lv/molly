@@ -7,6 +7,9 @@
 #include <vfs.h>
 #include <kalloc.h>
 #include <debug.h>
+#include <scancodes.h>
+#include <pipe.h>
+#include <ringbuffer.h>
 
 #define VGA_MEM 		(0xb8000 + KERNEL_OFF)
 #define WIDTH 			(80)
@@ -189,13 +192,17 @@ static vnode console = {
 
 typedef struct {
 
-	vnode *vga;
-	vnode *kbd;
+	vnode 	*vga;
+	vnode 	*kbd;
 
 } console_node;
 
+static ringbuffer_t *rb;
+
 static int console_open(vnode *vn) {
 	logfln("console open");
+
+	rb = ringbuffer_create(64);
 
 	vnode *vga = vfs_open("#vga");
 
@@ -244,12 +251,42 @@ static int console_write(fs_node *fn, void *buff, size_t off, int count) {
 }
 
 static int console_read(fs_node *fn, void *buff, size_t off, int count) {
-	kprintfln("console read");
+	logfln("console read");
+
+	if (count == 0)
+		return 0;
 
 	console_node *cn = (console_node *)fn;
 	vnode *kbd = cn->kbd;
 
-	return vfs_read(kbd, buff, off, count);
+	key_event e;
+
+	while (1) {
+
+		kbd->read_event(kbd->fn, &e);
+		char a = get_ascii(e.key);
+
+		if (a == 0)
+			continue;
+
+		size_t space = ringbuffer_space(rb);
+
+		if (space == 1 && e.key != KEY_ENTER)
+			continue;
+
+		kprintf("%c", a);
+		ringbuffer_write(rb, (char[]){ a }, 1);
+
+		if (e.key == KEY_ENTER) {
+			size_t unread = ringbuffer_unread(rb);
+			size_t good = (count < unread) ? count : unread;
+			size_t read = ringbuffer_read(rb, buff, good);
+			return read;
+		}
+
+	}
+
+	return 0;
 }
 
 static int vga_open(vnode *vn);

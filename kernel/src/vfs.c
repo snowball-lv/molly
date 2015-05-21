@@ -165,6 +165,8 @@ vnode *vfs_open(char *path) {
 		fte->vn 	= vn;
 		fte->path 	= kstrdup(path);
 
+		logfln("successfully opened file: [%s]", path);
+
 		return vn;
 	}
 

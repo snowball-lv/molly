@@ -14,6 +14,7 @@
 #include <debug.h>
 #include <kalloc.h>
 #include <sync.h>
+#include <proc.h>
 
 #define DATA_PORT 		0x60
 #define STATUS_REG		0x64
@@ -48,7 +49,9 @@ static struct {
 	int			write_pos;
 	int 		read_pos;
 
-} event_buffer;
+} ebuff;
+
+static vnode kbd;
 
 static void kbd_isr(trapframe_t *tf) {
 	int scancode = read_data();
@@ -61,12 +64,14 @@ static void kbd_isr(trapframe_t *tf) {
 		return;
 
 	//check if buffer full
-	if (event_buffer.write_pos - 1 == event_buffer.read_pos)
+	if ((ebuff.write_pos + 1) % KBD_BUFFER_SIZE == ebuff.read_pos) {
+		logfln("kbd buffer full. event lost");
 		return;
+	}
 
-	key_event *be = &event_buffer.buffer[event_buffer.write_pos];
-	event_buffer.write_pos++;
-	event_buffer.write_pos %= KBD_BUFFER_SIZE;
+	key_event *be = &ebuff.buffer[ebuff.write_pos];
+	ebuff.write_pos++;
+	ebuff.write_pos %= KBD_BUFFER_SIZE;
 
 	*be = e;
 }
@@ -75,14 +80,14 @@ typedef struct {
 
 } kbd_node;
 
-static int kbd_next_event(fs_node *fn, key_event *e) {
+static int kbd_read_event(fs_node *fn, key_event *e) {
 
 	//wait for kbd events
-	while (event_buffer.read_pos == event_buffer.write_pos);
+	while (ebuff.read_pos == ebuff.write_pos);
 
-	key_event *be = &event_buffer.buffer[event_buffer.read_pos];
-	event_buffer.read_pos++;
-	event_buffer.read_pos %= KBD_BUFFER_SIZE;
+	key_event *be = &ebuff.buffer[ebuff.read_pos];
+	ebuff.read_pos++;
+	ebuff.read_pos %= KBD_BUFFER_SIZE;
 
 	*e = *be;
 
@@ -112,7 +117,7 @@ static vnode kbd = {
 
 	.open = kbd_open,
 	.close = kbd_close,
-	.next_event = kbd_next_event
+	.read_event = kbd_read_event
 
 };
 
@@ -140,8 +145,8 @@ void init_kbd() {
 	kprintfln("init kbd");
 
 	//init event buffer
-	event_buffer.write_pos = 0;
-	event_buffer.read_pos = 0;
+	ebuff.write_pos = 0;
+	ebuff.read_pos = 0;
 
 	//disable controllers
 	command(CMD_DISABLE_1ST);
@@ -196,3 +201,5 @@ void init_kbd() {
 	mask &= ~(1 << IRQ_KBD);
 	pic_write_data(PIC_MASTER, mask);
 }
+
+

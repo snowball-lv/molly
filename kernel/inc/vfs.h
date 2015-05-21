@@ -23,8 +23,7 @@ struct vnode {
 	int (*write)(fs_node *fn, void *buff, size_t off, int count);
 	int (*read)(fs_node *fn, void *buff, size_t off, int count);
 
-	int (*next_event)(fs_node *fn, key_event *e);
-
+	int (*read_event)(fs_node *fn, key_event *e);
 };
 
 typedef struct {

@@ -10,6 +10,7 @@
 #include <gdt.h>
 #include <idt.h>
 #include <pe.h>
+#include <vfs.h>
 
 extern pd_t boot_pd;
 

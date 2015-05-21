@@ -57,7 +57,7 @@ static int sc_to_key_map[] = {
 	[0x54] = KEY_L_BRACKET,
 	[0x5b] = KEY_R_BRACKET,
 	
-	[0x5a] = KEY_R_ENTER,
+	[0x5a] = KEY_ENTER,
 };
 	
 static int in_break = 0;
@@ -99,7 +99,7 @@ char get_ascii(int key) {
 		case KEY_F_SLASH:
 		case KEY_L_BRACKET:
 		case KEY_R_BRACKET:
-		case KEY_R_ENTER:
+		case KEY_ENTER:
 			return key;
 	}
 		

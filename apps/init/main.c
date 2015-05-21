@@ -4,28 +4,18 @@
 int main(int argc, char **argv) {
 	
 	log("hello molly");
-	
-	int f = open("#console");
 
-	if (f < 0) {
-		log("couldn't open #console");
-		while (1);
+	int term = open("#console");
+
+	if (term < 0) {
+		log("failed to open console");
+		while(1);
 	}
 
-/*
-	char buff[1];
-	while (read(f, buff, 1) > 0) {
-		write(f, buff, 1);
-	}
-*/
+	char *buff[16];
+	read(term, buff, 16);
 
-	while(1);
-
-	int rc = close(f);
-
-	if (rc != 0) {
-		log("couldn't close #console");
-	}
+	log("read returned");
 
 	//exit will cause kernel panic
 	while(1);
