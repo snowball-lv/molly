@@ -55,11 +55,15 @@ static mount_point *get_mp(char *path) {
 		if (mp->state == S_FREE)
 			continue;
 
-		//support only devfs for now
-		if (strcmp(mp->path, "#") == 0) {
-			if (path[0] == '#')
-				return mp;
-		}
+		//support only devfs and root for now
+		//		/ - root
+		//		# - devfs
+
+		if (strlen(mp->path) != 1)
+			continue;
+
+		if (memcmp(mp->path, &path[0], 1) == 0)
+			return mp;
 	}
 
 	return 0;

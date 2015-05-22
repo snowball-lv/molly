@@ -27,6 +27,7 @@ static void sys_exit	(trapframe_t *tf);
 static void sys_close	(trapframe_t *tf);
 static void sys_write	(trapframe_t *tf);
 static void sys_read	(trapframe_t *tf);
+static void sys_getcwd	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
@@ -45,6 +46,7 @@ static void syscall_handler(trapframe_t *tf) {
 		case SYS_CLOSE: 	sys_close(tf); 	break;
 		case SYS_WRITE: 	sys_write(tf); 	break;
 		case SYS_READ: 		sys_read(tf); 	break;
+		case SYS_GET_CWD: 	sys_getcwd(tf); break;
 		
 		default:
 		kprintfln("unknown syscall");
@@ -277,7 +279,7 @@ static void sys_write(trapframe_t *tf) {
 	void *buff 	= ARG(tf, 1, void *);
 	int count 	= ARG(tf, 2, int);
 	
-	kprintfln("write fd: %d", fd);
+	logfln("write fd: %d", fd);
 	
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
@@ -298,7 +300,7 @@ static void sys_read(trapframe_t *tf) {
 	void *buff 	= ARG(tf, 1, void *);
 	int count 	= ARG(tf, 2, int);
 	
-	kprintfln("read fd: %d", fd);
+	logfln("read fd: %d", fd);
 	
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
@@ -313,10 +315,20 @@ static void sys_read(trapframe_t *tf) {
 	RET(tf, r);
 }
 
+static void sys_getcwd(trapframe_t *tf) {
 
+	void *buff = ARG(tf, 0, void *);
 
+	proc_t *p = cproc();
+	size_t len = strlen(p->cwd);
 
+	if (buff == 0)
+		SYSRET(len);
 
+	strcpy(buff, p->cwd);
+
+	SYSRET(len);
+}
 
 
 

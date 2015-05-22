@@ -8,7 +8,7 @@
 #define PTE_RW		(1 << 1)
 #define PTE_U		(1 << 2)
 #define PTE_PS		(1 << 7)
-#define PAGE_SIZE		(4096)
+#define PAGE_SIZE	4096
 
 typedef uint32_t pte_t;
 

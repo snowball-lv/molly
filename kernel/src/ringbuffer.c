@@ -79,3 +79,14 @@ size_t ringbuffer_write(ringbuffer_t *rb, void *buff, size_t count) {
 
 	return written;
 }
+
+void ringbuffer_pop(ringbuffer_t *rb) {
+
+	if (rb->read_pos == rb->write_pos)
+		return;
+
+	if (rb->write_pos == 0)
+		rb->write_pos = rb->size - 1;
+	else
+		rb->write_pos--;
+}

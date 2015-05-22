@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 size_t strlen(const char *str) {
 	size_t c = 0;
@@ -54,7 +55,23 @@ void *memset(void *ptr, int value, size_t num) {
 	return ptr;
 }
 
+char *strdup(const char *str) {
+	size_t len = strlen(str);
+	char *dup = malloc(len + 1);
+	strcpy(dup, str);
+	return dup;
+}
 
+char *strcpy(char *destination, const char *source) {
+	char *dst = destination;
+	while (*source) {
+		*dst = *source;
+		dst++;
+		source++;
+	}
+	*dst = 0;
+	return destination;
+}
 
 
 

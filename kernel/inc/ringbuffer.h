@@ -17,3 +17,5 @@ size_t ringbuffer_read(ringbuffer_t *rb, void *buff, size_t count);
 size_t ringbuffer_space(ringbuffer_t *rb);
 size_t ringbuffer_unread(ringbuffer_t *rb);
 size_t ringbuffer_write(ringbuffer_t *rb, void *buff, size_t count);
+
+void ringbuffer_pop(ringbuffer_t *rb);

@@ -12,10 +12,10 @@
 #include <ringbuffer.h>
 
 #define VGA_MEM 		(0xb8000 + KERNEL_OFF)
-#define WIDTH 			(80)
-#define HEIGHT 			(25)
-#define VGA_BLACK 		(0x0)
-#define VGA_LIGHT_GRAY 	(0x7)
+#define WIDTH 			80
+#define HEIGHT 			25
+#define VGA_BLACK 		0x0
+#define VGA_LIGHT_GRAY 	0x7
 
 static char attrib = (VGA_BLACK << 4) | VGA_LIGHT_GRAY;
 static int xPos = 0;
@@ -242,7 +242,7 @@ static int console_close(fs_node *fn) {
 }
 
 static int console_write(fs_node *fn, void *buff, size_t off, int count) {
-	kprintfln("console write");
+	logfln("console write");
 
 	console_node *cn = (console_node *)fn;
 	vnode *vga = cn->vga;
@@ -264,6 +264,25 @@ static int console_read(fs_node *fn, void *buff, size_t off, int count) {
 	while (1) {
 
 		kbd->read_event(kbd->fn, &e);
+
+		if (e.event != E_MAKE)
+			continue;
+
+		if (e.key == KEY_BKSP) {
+			size_t unread = ringbuffer_unread(rb);
+
+			if (unread == 0)
+				continue;
+
+			ringbuffer_pop(rb);
+
+			xPos--;
+			putc(' ');
+			xPos--;
+
+			continue;
+		}
+
 		char a = get_ascii(e.key);
 
 		if (a == 0)
@@ -279,7 +298,7 @@ static int console_read(fs_node *fn, void *buff, size_t off, int count) {
 
 		if (e.key == KEY_ENTER) {
 			size_t unread = ringbuffer_unread(rb);
-			size_t good = (count < unread) ? count : unread;
+			size_t good = ((size_t)count < unread) ? (size_t)count : unread;
 			size_t read = ringbuffer_read(rb, buff, good);
 			return read;
 		}
@@ -316,7 +335,7 @@ static int vga_write(fs_node *fn, void *buff, size_t off, int count) {
 
 	uint8_t *cbuff = buff;
 	for (int i = 0; i < count; i++)
-		logfln("%x", cbuff[i]);
+		kprintf("%c", cbuff[i]);
 
 	return count;
 }

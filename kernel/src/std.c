@@ -9,17 +9,6 @@ void *memcpy(void *destination, const void *source, size_t num) {
 	return destination;
 }
 
-char *strcpy(char *destination, const char *source) {
-	char *dst = destination;
-	while (*source) {
-		*dst = *source;
-		dst++;
-		source++;
-	}
-	*dst = 0;
-	return destination;
-}
-
 char *strcat(char *destination, const char *source) {
 	char *dst = destination;
 	dst += strlen(destination);
@@ -40,7 +29,6 @@ int strcmp(const char *str1, const char *str2) {
 	
 	return 0;
 }
-
 
 
 

@@ -15,6 +15,7 @@
 #define SYS_CLOSE		(11)
 #define SYS_WRITE		(12)
 #define SYS_READ		(13)
+#define SYS_GET_CWD		(14)
 
 void 	log		(const char *msg);
 void 	*sbrk	(int size);
@@ -30,15 +31,14 @@ int 	open	(char *path);
 int		close	(int fd);
 int		write	(int fd, const void *buff, int count);
 int		read	(int fd, const void *buff, int count);
+size_t	getcwd 	(void *buff);
 
+typedef struct {
 
+	char 	name[256];
+	size_t 	off;
 
-
-
-
-
-
-
+} dirent_t;
 
 
 

@@ -18,6 +18,7 @@
 #include <devfs.h>
 #include <klib.h>
 #include <io.h>
+#include <initrd.h>
 
 //not used
 //leave for linking with molly's libc
@@ -150,6 +151,9 @@ void kernel_main(MemMap *mm) {
 
 	//set up vfs
 	init_vfs();
+
+	//init and mount initrd
+	init_initrd();
 
 	//init and mount device fs/manager
 	init_devfs();

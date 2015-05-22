@@ -64,12 +64,9 @@ int	read(int fd, const void *buff, int count) {
 	return syscall_do(SYS_READ, fd, buff, count);
 }
 
-
-
-
-
-
-
+size_t getcwd(void *buff) {
+	return syscall_do(SYS_GET_CWD, buff);
+}
 
 
 

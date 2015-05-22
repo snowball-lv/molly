@@ -83,6 +83,7 @@ void run_init() {
 	p->state 	= S_USED;
 	p->pd	 	= create_pd();
 	p->ct_num 	= 0;
+	p->cwd		= "/";
 		
 	load_PDBR(vtp(p->pd));
 		
