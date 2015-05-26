@@ -1,0 +1,55 @@
+require "rake/clean"
+
+EXE = "ls.exe"
+SRC = FileList["*.c"]
+OBJ = SRC.map do |f|
+	f.ext(".o")
+end
+
+LIBC_INC 	= "../../libc/inc"
+LIBC_DIR 	= "../../libc/bin"
+LIBC 		= "molly"
+
+CFLAGS =
+	"-c " \
+	"-std=gnu99 " \
+	"-Wall " \
+	"-Wextra " \
+	"-ffreestanding " \
+	"-mno-ms-bitfields " \
+	"-I#{LIBC_INC} "
+
+rule ".o" => [proc { |tn| tn.ext(".c") }] do |t|
+	sh "gcc #{CFLAGS} #{t.source} -o #{t.name}"
+end
+
+LKFLAGS =
+	"-Xlinker " \
+	"-T link.ld " \
+	"-o #{EXE} " \
+	"-nostdlib " \
+	"-lgcc " \
+	"-L#{LIBC_DIR} " \
+	"-l#{LIBC} "
+	
+file EXE => OBJ do
+	sh "gcc #{OBJ.join(" ")} #{LKFLAGS}"
+end
+
+task :default => EXE
+
+CLEAN.include("*.exe")
+CLEAN.include("*.o")
+
+
+
+
+
+
+
+
+
+
+
+
+

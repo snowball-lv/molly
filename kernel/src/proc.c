@@ -11,6 +11,7 @@
 #include <idt.h>
 #include <pe.h>
 #include <vfs.h>
+#include <debug.h>
 
 extern pd_t boot_pd;
 
@@ -70,8 +71,6 @@ static int find_init() {
 	return 0;
 }
 
-int create_proc(char *path, char **args);
-
 void run_init() {
 
 	//null proc table
@@ -107,7 +106,7 @@ void run_init() {
 	
 	thread_t *t = &p->threads[0];
 	
-	set_up_thread(t, entry);
+	set_up_thread(t, entry, sbrk(4096));
 	
 	/*
 	
@@ -138,11 +137,11 @@ void run_init() {
 //proc_asm.asm
 void thread_entry();
 
-void set_up_thread(thread_t *t, entry_f entry) {
+void set_up_thread(thread_t *t, entry_f entry, void *stack) {
 
 	t->entry 	= entry;
 	t->state 	= S_USED;
-	t->ustack 	= sbrk(4096);
+	t->ustack 	= stack;
 	t->usp 		= t->ustack + 1024;
 	t->kstack	= kmalloc(4096);
 	t->ktop		= t->kstack + 1024;
@@ -208,24 +207,34 @@ int proc_clone(trapframe_t *tf) {
 }
 
 static int fetch_free_proc() {
-
-	//free pid
-	int pid = -1;
 	
 	//find free proc slot
 	for (int i = 0; i < MAX_PROCS; i++) {
-		if (procs[i].state == S_FREE) {
-			//reserve slot
-			procs[i].state = S_USED;
-			pid = i;
-			break;
-		}
+		
+		if (procs[i].state == S_FREE)
+			return i;
 	}
 	
-	return pid;
+	return -1;
 }
 
-int create_proc(char *path, char **args) {
+static void *psbrk(proc_t *p, size_t size) {
+	
+	char *cbrk = p->brk;
+	char *nbrk = cbrk + size;
+	void *ret = cbrk;
+
+	for (;cbrk < nbrk; cbrk += PAGE_SIZE) {
+		void *phys = pmm_alloc_block();
+		map_page(cbrk, phys, PTE_P | PTE_RW | PTE_U);
+	}
+	
+	p->brk = cbrk;
+
+	return ret;
+}
+
+int create_proc(char *wd, char *img) {
 	
 	//get free proc slot
 	int pid = fetch_free_proc();
@@ -236,12 +245,16 @@ int create_proc(char *path, char **args) {
 		
 	//new proc
 	proc_t *p = &procs[pid];
-	
+
+	//set wd
+	p->cwd = wd;
+
 	//create new proc's pd with kernel pages
 	p->pd = create_pd();
-	
+
 	//current proc's pd (indirect due to init)
 	pd_t *cpd = (pd_t *)0xfffff000;
+	void *cpd_phys = vtp(cpd);
 	
 	//switch to new pd
 	load_PDBR(vtp(p->pd));
@@ -249,33 +262,97 @@ int create_proc(char *path, char **args) {
 	//load bianry image into lower memory
 	uintptr_t brk = 0;
 	entry_f entry = 0;
-	int err = load_image(init_start, &entry, &brk);
+	int err = load_image(img, &entry, &brk);
 	
 	//failed to load image
 	if (err < 0) {
 		//switch back to callers pd
-		load_PDBR(vtp(cpd));
+		load_PDBR(cpd_phys);
 		return -1;
 	}
 		
 	p->brk 		= (void *)brk;
 	p->ct_num 	= 0;
 
+	logfln("brk: %x", p->brk);
+
 	//clear thread table
 	for (int i = 0; i < MAX_THREADS; i++)
 		p->threads[i].state = S_FREE;
+
+	//clear file table
+	for (int i = 0; i < MAX_THREADS; i++)
+		p->files[i].state = S_FREE;
 		
 	//set up initial thread
 	thread_t *t = &p->threads[0];
-	set_up_thread(t, entry);
-	
+	set_up_thread(t, entry, psbrk(p, 4096));
+
 	//switch back to callers pd
-	load_PDBR(vtp(cpd));
+	load_PDBR(cpd_phys);
+
+	//make process ready for sched.
+	p->state = S_USED;
 	
 	return pid;
 }
 
+static int runnable_procs() {
 
+	int sum = 0;
+
+	for (int i = 0; i < MAX_PROCS; i++) {
+
+		proc_t *p = get_proc(i);
+
+		if (p->state == S_USED)
+			sum++;
+	}
+
+	return sum;
+}
+
+void reschedule() {
+
+	if (runnable_procs() <= 1)
+		return;
+
+	//logfln("resched");
+
+	int start = (cp_num + 1) % MAX_PROCS;
+	int next = cp_num;
+
+	int i = start;
+	while (1) {
+
+		proc_t *p = &procs[i];
+
+		if (p->state == S_USED) {
+			next = i;
+			break;
+		}
+
+		i = (i + 1) & MAX_PROCS;
+	}
+
+	if (cp_num == next)
+		return;
+
+	//logfln("switch: %d -> %d", cp_num, next);
+
+	proc_t *cp = get_proc(cp_num);
+	thread_t *ct = &cp->threads[cp->ct_num];
+
+	proc_t *np = get_proc(next);
+	thread_t *nt = &np->threads[np->ct_num];
+
+	load_PDBR(vtp(np->pd));
+
+	cp_num = next;
+
+	set_tss(nt->ktop);
+	switch_context((void **)&ct->ksp, nt->ksp);
+}	
 
 
 

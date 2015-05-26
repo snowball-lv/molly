@@ -4,6 +4,7 @@
 #include <kalloc.h>
 #include <proc.h>
 #include <molly.h>
+#include <debug.h>
 
 #define PDEI(a)		(((uintptr_t)(a) >> 22) & 0x3ff)
 #define PTEI(a)		(((uintptr_t)(a) >> 12) & 0x3ff)

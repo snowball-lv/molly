@@ -2,20 +2,39 @@
 
 #include <string.h>
 
-#define SYS_LOG			(1)
-#define SYS_SBRK		(2)
-#define SYS_MKT			(3)
-#define SYS_YIELD		(4)
-#define SYS_FORK		(5)
-#define SYS_YIELDP		(6)
-#define SYS_STALL		(7)
-#define SYS_EXEC		(8)
-#define SYS_OPEN		(9)
-#define SYS_EXIT		(10)
-#define SYS_CLOSE		(11)
-#define SYS_WRITE		(12)
-#define SYS_READ		(13)
-#define SYS_GET_CWD		(14)
+typedef struct {
+
+	char 	name[256];
+
+} dirent_t;
+
+typedef enum {
+
+	SEEK_SET,
+	SEEK_CUR,
+	SEEK_END
+
+} seek_t;
+
+enum { 
+
+	SYS_LOG	,
+	SYS_SBRK,
+	SYS_MKT	,
+	SYS_YIELD,
+	SYS_FORK,
+	SYS_YIELDP,
+	SYS_STALL,
+	SYS_EXEC,
+	SYS_OPEN,
+	SYS_EXIT,
+	SYS_CLOSE,
+	SYS_WRITE,
+	SYS_READ,
+	SYS_GET_CWD,
+	SYS_READ_DIR
+
+};
 
 void 	log		(const char *msg);
 void 	*sbrk	(int size);
@@ -24,7 +43,7 @@ void	yield	();
 int		fork	();
 void	yieldp	();
 void	stall	(unsigned ms);
-int		exec	(char *path, char **args);
+int		exec 	(char *path, int in, int out, int err);
 int 	open	(char *path);
 void 	exit	();
 int 	open	(char *path);
@@ -32,16 +51,7 @@ int		close	(int fd);
 int		write	(int fd, const void *buff, int count);
 int		read	(int fd, const void *buff, int count);
 size_t	getcwd 	(void *buff);
-
-typedef struct {
-
-	char 	name[256];
-	size_t 	off;
-
-} dirent_t;
-
-
-
+int		readdir (int fd, dirent_t *e);
 
 
 

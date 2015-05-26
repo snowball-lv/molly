@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <scancodes.h>
+#include <molly.h>
 
 typedef struct vnode vnode;
 typedef void fs_node;
@@ -20,10 +21,14 @@ struct vnode {
 
 	int (*open)(vnode *vn);
 	int (*close)(fs_node *fn);
-	int (*write)(fs_node *fn, void *buff, size_t off, int count);
 	int (*read)(fs_node *fn, void *buff, size_t off, int count);
+	int (*write)(fs_node *fn, void *buff, size_t off, int count);
 
 	int (*read_event)(fs_node *fn, key_event *e);
+
+	int (*read_dir)(fs_node *fn, size_t off, dirent_t *e);
+
+	int (*seek)(fs_node *fn, size_t cur, int off, seek_t whence);
 };
 
 typedef struct {

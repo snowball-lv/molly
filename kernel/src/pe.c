@@ -3,6 +3,7 @@
 #include <pmm.h>
 #include <console.h>
 #include <paging.h>
+#include <debug.h>
 
 typedef int8_t 	BYTE;
 typedef int16_t WORD;
@@ -76,6 +77,8 @@ int load_image(char *bin, entry_f *e, uintptr_t *brk) {
 	int32_t sigoff = *(int32_t *)(bin + 0x3c);
 	char *sig = bin + sigoff;
 	
+	logfln("pe sig: [%s]", sig);
+
 	IMAGE_FILE_HEADER *h = (IMAGE_FILE_HEADER *)(sig + 4);
 	
 	char *ptr = (char *)h;

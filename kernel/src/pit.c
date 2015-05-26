@@ -6,6 +6,7 @@
 #include <string.h>
 #include <idt.h>
 #include <acpi.h>
+#include <debug.h>
 
 #define PIT_HZ			1193182
 #define COUNTER_0 		0x40
@@ -20,7 +21,11 @@ clock_t ticks() {
 }
 
 static void tick_isr(trapframe_t *tf) {
+	
 	PIT_TICKS++;
+
+	if (PIT_TICKS % CLOCKS_PER_SEC == 0)
+		reschedule();
 }
 
 void init_pit() {

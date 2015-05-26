@@ -22,7 +22,7 @@ typedef struct {
 
 } thread_t;
 
-void set_up_thread(thread_t *t, entry_f entry);
+void set_up_thread(thread_t *t, entry_f entry, void *stack);
 
 #define MAX_THREADS		16
 #define S_FREE			1
@@ -42,10 +42,11 @@ typedef struct {
 } proc_t;
 
 proc_t *cproc();
+proc_t *get_proc(size_t num);
 
-int create_proc(char *name, char **args);
+int create_proc(char *wd, char *img);
 
-
+void reschedule();
 
 
 

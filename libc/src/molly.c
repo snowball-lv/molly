@@ -40,8 +40,8 @@ void stall(unsigned ms) {
 	syscall_do(SYS_STALL, ms);
 }
 
-int exec(char *path, char **args) {
-	return syscall_do(SYS_EXEC, path, args);
+int	exec(char *path, int in, int out, int err) {
+	return syscall_do(SYS_EXEC, path, in, out, err);
 }
 
 int open(char *path) {
@@ -68,8 +68,9 @@ size_t getcwd(void *buff) {
 	return syscall_do(SYS_GET_CWD, buff);
 }
 
-
-
+int	readdir(int fd, dirent_t *e) {
+	return syscall_do(SYS_READ_DIR, fd, e);
+}
 
 
 

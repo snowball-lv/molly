@@ -28,25 +28,27 @@ static void sys_close	(trapframe_t *tf);
 static void sys_write	(trapframe_t *tf);
 static void sys_read	(trapframe_t *tf);
 static void sys_getcwd	(trapframe_t *tf);
+static void sys_readdir	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
 	switch (tf->eax) {
 	
-		case SYS_LOG: 		sys_log(tf); 	break;
-		case SYS_SBRK: 		sys_sbrk(tf); 	break;
-		case SYS_MKT: 		sys_mkt(tf); 	break;
-		case SYS_YIELD: 	sys_yield(tf); 	break;
-		case SYS_FORK: 		sys_fork(tf); 	break;
-		case SYS_YIELDP: 	sys_yieldp(tf); break;
-		case SYS_STALL: 	sys_stall(tf); 	break;
-		case SYS_EXEC: 		sys_exec(tf); 	break;
-		case SYS_OPEN: 		sys_open(tf); 	break;
-		case SYS_EXIT: 		sys_exit(tf); 	break;
-		case SYS_CLOSE: 	sys_close(tf); 	break;
-		case SYS_WRITE: 	sys_write(tf); 	break;
-		case SYS_READ: 		sys_read(tf); 	break;
-		case SYS_GET_CWD: 	sys_getcwd(tf); break;
+		case SYS_LOG: 		sys_log(tf); 		break;
+		case SYS_SBRK: 		sys_sbrk(tf); 		break;
+		case SYS_MKT: 		sys_mkt(tf); 		break;
+		case SYS_YIELD: 	sys_yield(tf); 		break;
+		case SYS_FORK: 		sys_fork(tf); 		break;
+		case SYS_YIELDP: 	sys_yieldp(tf); 	break;
+		case SYS_STALL: 	sys_stall(tf); 		break;
+		case SYS_EXEC: 		sys_exec(tf); 		break;
+		case SYS_OPEN: 		sys_open(tf); 		break;
+		case SYS_EXIT: 		sys_exit(tf); 		break;
+		case SYS_CLOSE: 	sys_close(tf); 		break;
+		case SYS_WRITE: 	sys_write(tf); 		break;
+		case SYS_READ: 		sys_read(tf); 		break;
+		case SYS_GET_CWD: 	sys_getcwd(tf); 	break;
+		case SYS_READ_DIR: 	sys_readdir(tf);	break;
 		
 		default:
 		kprintfln("unknown syscall");
@@ -66,8 +68,10 @@ static uint32_t *getbp(trapframe_t *tf) {
 	return prev;
 }
 
+
 #define ARG(tf, num, type)	((type)*(getbp(tf) + 2 + (num)))
 #define RET(tf, value)		(tf->eax = (value))
+#define SYSRET(value) 		{ RET(tf, (value)); return; }
 
 static void sys_log(trapframe_t *tf) {
 	char *msg = ARG(tf, 0, char *);
@@ -122,7 +126,7 @@ static void sys_mkt(trapframe_t *tf) {
 	}
 	
 	entry_f tmain = ARG(tf, 0, entry_f);
-	set_up_thread(t, tmain);
+	set_up_thread(t, tmain, sbrk(4096));
 }
 
 static void sys_yield(trapframe_t *tf) {
@@ -199,13 +203,45 @@ static void sys_stall(trapframe_t *tf) {
 }
 
 static void sys_exec(trapframe_t *tf) {
-	char *path = ARG(tf, 0, char *);
-	char **args = ARG(tf, 1, char **);
-	kprintfln("exec: %s", path);
-	
-	int ret = create_proc(path, args);
-	
-	RET(tf, ret);
+
+	char *path 	= ARG(tf, 0, char *);
+	int in 		= ARG(tf, 1, int);
+	int out 	= ARG(tf, 2, int);
+	int err 	= ARG(tf, 3, int);
+
+	logfln("exec: [%s]", path);
+
+	vnode *vn = vfs_open(path);
+
+	if (vn == 0) {
+		logfln("couldn't open: [%s]", path);
+		SYSRET(-1);
+	}
+
+	int size = vn->seek(vn->fn, 0, 0, SEEK_END);
+
+	if (size < 0) {
+		logfln("seek fail");
+		SYSRET(-1);
+	}
+
+	logfln("seek size: %d", size);
+
+	void *img = kmalloc(size);
+	int read = vfs_read(vn, img, 0, size);
+
+	logfln("bytes read: %d", read);
+
+	int pid = create_proc("/", img);
+
+	if (pid < 0) {
+		logfln("failed to create new proc");
+		SYSRET(-1);
+	}
+
+	logfln("new pid: %d", pid);
+
+	SYSRET(pid);
 }
 
 static int find_free_handle(proc_t *p) {
@@ -220,8 +256,6 @@ static int find_free_handle(proc_t *p) {
 
 	return -1;
 }
-
-#define SYSRET(value) { RET(tf, (value)); return; }
 
 static void sys_open(trapframe_t *tf) {
 
@@ -330,9 +364,29 @@ static void sys_getcwd(trapframe_t *tf) {
 	SYSRET(len);
 }
 
+static void sys_readdir	(trapframe_t *tf) {
 
+	int fd 		= ARG(tf, 0, int);
+	dirent_t *e = ARG(tf, 1, dirent_t *);
 
+	logfln("read dir: %d", fd);
 
+	proc_t *p = cproc();
+	file_handle *fh = &p->files[fd];
+	vnode *dir = fh->vn;
+
+	if (dir->read_dir == 0) {
+		logfln("dir has not read_dir() method");
+		SYSRET(-1);
+	}
+
+	int rc = dir->read_dir(dir->fn, fh->off, e);
+
+	if (rc > -1)
+		fh->off += rc;
+
+	SYSRET(rc);
+}
 
 
 
