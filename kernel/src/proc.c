@@ -17,11 +17,21 @@ extern pd_t boot_pd;
 
 #define MAX_PROCS	(16)
 
-static proc_t procs[MAX_PROCS];
+static proc_t procs[MAX_PROCS] = {
+
+	[0] = {
+		.state = S_USED
+	}
+};
+
 static int cp_num = 0;
 
 proc_t *get_proc(size_t num) {
 	return &procs[num];
+}
+
+proc_t *current_proc() {
+	return &procs[cp_num];
 }
 
 proc_t *cproc() {
@@ -137,6 +147,10 @@ void run_init() {
 //proc_asm.asm
 void thread_entry();
 
+void thread_pre_entry() {
+	exit_critical_section(1);
+}
+
 void set_up_thread(thread_t *t, entry_f entry, void *stack) {
 
 	t->entry 	= entry;
@@ -158,7 +172,6 @@ void set_up_thread(thread_t *t, entry_f entry, void *stack) {
 	PUSH(t->entry);		//eip
 	
 	PUSH(thread_entry);
-	PUSH(read_flags());
 	for (int i = 0; i < 8; i++)
 		PUSH(0);
 }
@@ -199,7 +212,6 @@ int proc_clone(trapframe_t *tf) {
 	PUSH(tf->eip);			//eip
 	
 	PUSH(fork_child_ret);
-	PUSH(read_flags());
 	for (int i = 0; i < 8; i++)
 		PUSH(0);
 	
@@ -297,64 +309,97 @@ int create_proc(char *wd, char *img) {
 	return pid;
 }
 
-static int runnable_procs() {
+static int next_proc() {
 
-	int sum = 0;
-
+	int start = (cp_num + 1) % MAX_PROCS;
+	
 	for (int i = 0; i < MAX_PROCS; i++) {
 
-		proc_t *p = get_proc(i);
+		int pid = (start + i) % MAX_PROCS;
 
-		if (p->state == S_USED)
-			sum++;
+		if (procs[pid].state == S_USED)
+			return pid;
 	}
 
-	return sum;
+	return -1;
+}
+
+static int next_thread() {
+
+	proc_t *p = current_proc();
+	int start = (p->ct_num + 1) % MAX_THREADS;
+	
+	for (int i = 0; i < MAX_THREADS; i++) {
+
+		int tid = (start + i) % MAX_THREADS;
+
+		if (p->threads[tid].state == S_USED)
+			return tid;
+	}
+
+	return p->ct_num;
+}
+
+thread_t *current_thread() {
+	proc_t *cp = cproc();
+	return &cp->threads[cp->ct_num];
+}
+
+static void switch_threads(thread_t *from, thread_t *to) {
+	set_tss(to->ktop);
+	switch_context((void **)&from->ksp, to->ksp);
 }
 
 void reschedule() {
 
-	if (runnable_procs() <= 1)
-		return;
+	int is = enter_critical_section();
 
-	//logfln("resched");
+	int next = next_proc();
 
-	int start = (cp_num + 1) % MAX_PROCS;
-	int next = cp_num;
+	if (next < 0)
+		panic("*** out of processes to schedule");
 
-	int i = start;
-	while (1) {
+	thread_t *ct = current_thread();
 
-		proc_t *p = &procs[i];
+	if (cp_num != next) {
 
-		if (p->state == S_USED) {
-			next = i;
-			break;
-		}
+		proc_t *p = get_proc(next);
+		load_PDBR(vtp(p->pd));
 
-		i = (i + 1) & MAX_PROCS;
+		cp_num = next;
 	}
 
-	if (cp_num == next)
+	proc_t *cp = current_proc();
+	int tid = next_thread();
+	thread_t *nt = &cp->threads[tid];
+
+	if (ct == nt) {
+		exit_critical_section(is);
 		return;
+	}
 
-	//logfln("switch: %d -> %d", cp_num, next);
+	cp->ct_num = tid;
 
-	proc_t *cp = get_proc(cp_num);
-	thread_t *ct = &cp->threads[cp->ct_num];
+	switch_threads(ct, nt);
 
-	proc_t *np = get_proc(next);
-	thread_t *nt = &np->threads[np->ct_num];
-
-	load_PDBR(vtp(np->pd));
-
-	cp_num = next;
-
-	set_tss(nt->ktop);
-	switch_context((void **)&ct->ksp, nt->ksp);
+	exit_critical_section(is);
 }	
 
+int has_active_threads(proc_t *p) {
 
+	if (p->state == S_CLEANUP)
+		return 0;
+
+	for (int i = 0; i < MAX_THREADS; i++) {
+
+		thread_t *t = &p->threads[i];
+
+		if (t->state == S_USED)
+			return 1;
+	}
+
+	return 0;
+}
 
 
 

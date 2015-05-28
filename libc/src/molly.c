@@ -7,7 +7,7 @@ int atexit(void (*func)(void)) { return 0; }
 
 void _molly_entry(int argc, char **argv) {
 	main(argc, argv);
-	exit();
+	exit_t();
 }
 
 int syscall_do(int f, ...);
@@ -70,6 +70,14 @@ size_t getcwd(void *buff) {
 
 int	readdir(int fd, dirent_t *e) {
 	return syscall_do(SYS_READ_DIR, fd, e);
+}
+
+void exit_t() {
+	syscall_do(SYS_EXIT_T);
+}
+
+void exit_p() {
+	syscall_do(SYS_EXIT_P);
 }
 
 

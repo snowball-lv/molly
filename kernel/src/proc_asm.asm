@@ -19,13 +19,16 @@ _user_jump:
 	mov esp, eax
 	
 	popa
-	popf
 	
 	ret
+
+;static void thread_pre_entry();
+extern _thread_pre_entry
 
 ;void thread_entry();
 global _thread_entry
 _thread_entry:
+	call _thread_pre_entry
 	iret
 	
 ;void fork_child_ret();
@@ -38,21 +41,19 @@ _fork_child_ret:
 global _switch_context
 _switch_context:
 
-	;save eflags + all 8 general purpose reg
-	pushf
+	;save all 8 general purpose reg
 	pusha
 	
 	;save current esp
-	mov eax, [esp + 40]
+	mov eax, [esp + 36]
 	mov [eax], esp
 	
 	;load new esp
-	mov eax, [esp + 44]
+	mov eax, [esp + 40]
 	mov esp, eax
 	
 	;load new register values
 	popa
-	popf
 	
 	ret
 	

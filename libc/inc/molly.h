@@ -32,7 +32,9 @@ enum {
 	SYS_WRITE,
 	SYS_READ,
 	SYS_GET_CWD,
-	SYS_READ_DIR
+	SYS_READ_DIR,
+	SYS_EXIT_T,
+	SYS_EXIT_P
 
 };
 
@@ -46,6 +48,8 @@ void	stall	(unsigned ms);
 int		exec 	(char *path, int in, int out, int err);
 int 	open	(char *path);
 void 	exit	();
+void 	exit_t	();
+void 	exit_p	();
 int 	open	(char *path);
 int		close	(int fd);
 int		write	(int fd, const void *buff, int count);

@@ -21,6 +21,17 @@ void disable_ints() {
 	__asm__("cli");
 }
 
+int enter_critical_section() {
+	int state = read_flags() & F_INTERRUPTS;
+	__asm__("cli");
+	return state;
+}
+
+void exit_critical_section(int interrupt_state) {
+	if (interrupt_state) //if were enabled
+		__asm__("sti");
+}
+
 const char *kstrchr(const char *str, int character) {
 	while (*str != 0 && *str != character)
 		str++;

@@ -2,6 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+int thread() {
+	log("in init thread");
+	exit_t();
+}
+
 int main(int argc, char **argv) {
 
 	log("in init");
@@ -14,7 +19,8 @@ int main(int argc, char **argv) {
 	}
 
 	log("shell started");
-	while(1);
+
+	//mkt(thread);
 
 	/*
 	
@@ -45,7 +51,6 @@ int main(int argc, char **argv) {
 	*/
 
 	//exit will cause kernel panic
-	while(1);
 	
-	return 1;
+	return 0;
 }

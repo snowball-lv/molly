@@ -143,7 +143,7 @@ void kernel_main(MemMap *mm) {
 	//set up pic
 	init_pic();
 
-	//set up pit
+	//set up pit and scheduling
 	init_pit();
 
 	//set up syscalls

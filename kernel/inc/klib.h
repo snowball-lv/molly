@@ -6,7 +6,7 @@
 #define ALIGN_RIGHT(v, a)	\
 	(((v) + (a) - 1) & ~((a) - 1))
 
-#define FLAG_INTERRUPTS		(1 << 9)
+#define F_INTERRUPTS		(1 << 9)
 
 uint32_t read_ebp();
 uint32_t read_esp();
@@ -31,6 +31,9 @@ void sleep(uintmax_t millis);
 
 void enable_ints();
 void disable_ints();
+
+int enter_critical_section();
+void exit_critical_section(int interrupt_state);
 
 char *kstrdup(char *str);
 

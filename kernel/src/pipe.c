@@ -70,7 +70,7 @@ static int pipe_write(fs_node *fn, void *buff, size_t off, int count) {
 
 	int written = 0;
 
-	int ints = read_flags() & FLAG_INTERRUPTS;
+	int ints = read_flags() & F_INTERRUPTS;
 
 	while (written != count) {
 
@@ -115,7 +115,7 @@ static int pipe_read(fs_node *fn, void *buff, size_t off, int count) {
 
 	int read = 0;
 
-	int ints = read_flags() & FLAG_INTERRUPTS;
+	int ints = read_flags() & F_INTERRUPTS;
 
 	while (read != count) {
 

@@ -27,6 +27,7 @@ void set_up_thread(thread_t *t, entry_f entry, void *stack);
 #define MAX_THREADS		16
 #define S_FREE			1
 #define S_USED			2
+#define S_CLEANUP		3
 #define MAX_FILES		16
 
 typedef struct {
@@ -45,6 +46,9 @@ proc_t *cproc();
 proc_t *get_proc(size_t num);
 
 int create_proc(char *wd, char *img);
+proc_t *current_proc();
+thread_t *current_thread();
+int has_active_threads(proc_t *p);
 
 void reschedule();
 

@@ -29,6 +29,8 @@ static void sys_write	(trapframe_t *tf);
 static void sys_read	(trapframe_t *tf);
 static void sys_getcwd	(trapframe_t *tf);
 static void sys_readdir	(trapframe_t *tf);
+static void sys_exit_t	(trapframe_t *tf);
+static void sys_exit_p	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
@@ -49,9 +51,11 @@ static void syscall_handler(trapframe_t *tf) {
 		case SYS_READ: 		sys_read(tf); 		break;
 		case SYS_GET_CWD: 	sys_getcwd(tf); 	break;
 		case SYS_READ_DIR: 	sys_readdir(tf);	break;
+		case SYS_EXIT_T: 	sys_exit_t(tf);		break;
+		case SYS_EXIT_P: 	sys_exit_p(tf);		break;
 		
 		default:
-		kprintfln("unknown syscall");
+		panic("unknown syscall");
 		break;
 	}
 }
@@ -388,9 +392,31 @@ static void sys_readdir	(trapframe_t *tf) {
 	SYSRET(rc);
 }
 
+static void sys_exit_t(trapframe_t *tf) {
+	logfln("exit thread");
 
+	int is = enter_critical_section();
 
+	proc_t *cp = current_proc();
 
+	thread_t *ct = current_thread();
+	ct->state = S_CLEANUP;
+
+	if (!has_active_threads(cp)) {
+		logfln("proc is out of threads, disposing");
+		cp->state = S_CLEANUP;
+	} else {
+		logfln("proc has more threads");
+	}
+
+	exit_critical_section(is);
+
+	reschedule();
+}
+
+static void sys_exit_p(trapframe_t *tf) {
+	panic("exit process");
+}
 
 
 
