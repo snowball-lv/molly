@@ -5,11 +5,6 @@ int main(int argc, char **argv);
 //try to get rid of this shit
 int atexit(void (*func)(void)) { return 0; }
 
-void _molly_entry(int argc, char **argv) {
-	main(argc, argv);
-	exit_t();
-}
-
 int syscall_do(int f, ...);
 
 void log(const char *msg) {
@@ -46,10 +41,6 @@ int	exec(char *path, int in, int out, int err) {
 
 int open(char *path) {
 	return syscall_do(SYS_OPEN, path);
-}
-
-void exit() {
-	syscall_do(SYS_EXIT);
 }
 
 int close(int fd) {

@@ -48,7 +48,8 @@ CFLAGS =
 	"-Iinc " \
 	"-I#{LIBC_INC} " \
 	"-mno-ms-bitfields " \
-	"-D _MOLLY_DEBUG_ "
+	"-D _MOLLY_DEBUG_ " \
+	""
 
 rule ".o" => [
 	proc { |tn| tn.sub("out", "src").ext(".c") } 

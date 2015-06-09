@@ -45,7 +45,7 @@ typedef struct {
 proc_t *cproc();
 proc_t *get_proc(size_t num);
 
-int create_proc(char *wd, char *img);
+int create_proc(char *wd, char *img, int in, int out, int err);
 proc_t *current_proc();
 thread_t *current_thread();
 int has_active_threads(proc_t *p);

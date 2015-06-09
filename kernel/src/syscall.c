@@ -23,7 +23,6 @@ static void sys_yieldp	(trapframe_t *tf);
 static void sys_stall	(trapframe_t *tf);
 static void sys_exec	(trapframe_t *tf);
 static void sys_open	(trapframe_t *tf);
-static void sys_exit	(trapframe_t *tf);
 static void sys_close	(trapframe_t *tf);
 static void sys_write	(trapframe_t *tf);
 static void sys_read	(trapframe_t *tf);
@@ -45,7 +44,6 @@ static void syscall_handler(trapframe_t *tf) {
 		case SYS_STALL: 	sys_stall(tf); 		break;
 		case SYS_EXEC: 		sys_exec(tf); 		break;
 		case SYS_OPEN: 		sys_open(tf); 		break;
-		case SYS_EXIT: 		sys_exit(tf); 		break;
 		case SYS_CLOSE: 	sys_close(tf); 		break;
 		case SYS_WRITE: 	sys_write(tf); 		break;
 		case SYS_READ: 		sys_read(tf); 		break;
@@ -213,7 +211,7 @@ static void sys_exec(trapframe_t *tf) {
 	int out 	= ARG(tf, 2, int);
 	int err 	= ARG(tf, 3, int);
 
-	logfln("exec: [%s]", path);
+	logfln("exec: [%s], %d, %d, %d", path, in, out, err);
 
 	vnode *vn = vfs_open(path);
 
@@ -236,7 +234,7 @@ static void sys_exec(trapframe_t *tf) {
 
 	logfln("bytes read: %d", read);
 
-	int pid = create_proc("/", img);
+	int pid = create_proc("/", img, in, out, err);
 
 	if (pid < 0) {
 		logfln("failed to create new proc");
@@ -290,10 +288,6 @@ static void sys_open(trapframe_t *tf) {
 	logfln("opened fd: %d", fhi);
 	
 	SYSRET(fhi);
-}
-
-static void sys_exit(trapframe_t *tf) {
-	panic("exit");
 }
 
 static void sys_close(trapframe_t *tf) {
@@ -417,6 +411,5 @@ static void sys_exit_t(trapframe_t *tf) {
 static void sys_exit_p(trapframe_t *tf) {
 	panic("exit process");
 }
-
 
 

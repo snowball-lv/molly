@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <molly.h>
 
+
 void *malloc(size_t size) {
 
 	if (size == 0)
@@ -13,4 +14,9 @@ void *malloc(size_t size) {
 void free(void *ptr) {
 	log("free");
 	return;
+}
+
+
+void exit(int status) {
+	exit_t();
 }

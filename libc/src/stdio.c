@@ -2,6 +2,12 @@
 #include <stdlib.h>
 #include <molly.h>
 #include <limits.h>
+#include <string.h>
+
+
+FILE *stdin;
+FILE *stdout;
+FILE *stderr;
 
 
 FILE *fopen(const char *filename, const char *mode) {
@@ -71,4 +77,12 @@ size_t fwrite (const void *ptr, size_t size, size_t count, FILE *stream) {
 	}
 
 	return elems;
+}
+
+int printf(const char *format, ...) {
+	fwrite(format, strlen(format), 1, stdout);
+}
+
+int fileno(FILE *stream) {
+	return stream->fd;
 }

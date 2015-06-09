@@ -1,17 +1,25 @@
 #include <molly.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 int thread() {
 	log("in init thread");
 	exit_t();
+	return 0;
 }
 
 int main(int argc, char **argv) {
 
 	log("in init");
 
-	int pid = exec("/shell.exe", -1, -1, -1);
+	FILE *console = fopen("#console", "todo");
+
+	int pid = exec(
+		"/shell.exe",
+		-1,
+		fileno(console),
+		fileno(console));
 
 	if (pid < 0) {
 		log("unable to start shell");

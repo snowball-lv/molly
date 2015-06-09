@@ -246,7 +246,7 @@ static void *psbrk(proc_t *p, size_t size) {
 	return ret;
 }
 
-int create_proc(char *wd, char *img) {
+int create_proc(char *wd, char *img, int in, int out, int err) {
 	
 	//get free proc slot
 	int pid = fetch_free_proc();
@@ -274,10 +274,10 @@ int create_proc(char *wd, char *img) {
 	//load bianry image into lower memory
 	uintptr_t brk = 0;
 	entry_f entry = 0;
-	int err = load_image(img, &entry, &brk);
+	int imgerr = load_image(img, &entry, &brk);
 	
 	//failed to load image
-	if (err < 0) {
+	if (imgerr < 0) {
 		//switch back to callers pd
 		load_PDBR(cpd_phys);
 		return -1;
@@ -296,6 +296,20 @@ int create_proc(char *wd, char *img) {
 	for (int i = 0; i < MAX_THREADS; i++)
 		p->files[i].state = S_FREE;
 		
+	//copy standard streams
+	if (in >= 0) {
+		proc_t *cp = current_proc();
+		p->files[0] = cp->files[in];
+	}
+	if (out >= 0) {
+		proc_t *cp = current_proc();
+		p->files[1] = cp->files[out];
+	}
+	if (err >= 0) {
+		proc_t *cp = current_proc();
+		p->files[2] = cp->files[err];
+	}
+
 	//set up initial thread
 	thread_t *t = &p->threads[0];
 	set_up_thread(t, entry, psbrk(p, 4096));

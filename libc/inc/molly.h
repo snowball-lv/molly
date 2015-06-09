@@ -27,7 +27,6 @@ enum {
 	SYS_STALL,
 	SYS_EXEC,
 	SYS_OPEN,
-	SYS_EXIT,
 	SYS_CLOSE,
 	SYS_WRITE,
 	SYS_READ,
@@ -47,7 +46,6 @@ void	yieldp	();
 void	stall	(unsigned ms);
 int		exec 	(char *path, int in, int out, int err);
 int 	open	(char *path);
-void 	exit	();
 void 	exit_t	();
 void 	exit_p	();
 int 	open	(char *path);
