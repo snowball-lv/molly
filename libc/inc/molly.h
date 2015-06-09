@@ -33,7 +33,9 @@ enum {
 	SYS_GET_CWD,
 	SYS_READ_DIR,
 	SYS_EXIT_T,
-	SYS_EXIT_P
+	SYS_EXIT_P,
+	SYS_WAIT,
+	SYS_WAIT_PID
 
 };
 
@@ -54,6 +56,7 @@ int		write	(int fd, const void *buff, int count);
 int		read	(int fd, const void *buff, int count);
 size_t	getcwd 	(void *buff);
 int		readdir (int fd, dirent_t *e);
-
+int 	wait 	();
+void 	waitpid (int pid);
 
 

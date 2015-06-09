@@ -30,6 +30,8 @@ static void sys_getcwd	(trapframe_t *tf);
 static void sys_readdir	(trapframe_t *tf);
 static void sys_exit_t	(trapframe_t *tf);
 static void sys_exit_p	(trapframe_t *tf);
+static void sys_wait	(trapframe_t *tf);
+static void sys_waitpid	(trapframe_t *tf);
 
 static void syscall_handler(trapframe_t *tf) {
 
@@ -51,6 +53,8 @@ static void syscall_handler(trapframe_t *tf) {
 		case SYS_READ_DIR: 	sys_readdir(tf);	break;
 		case SYS_EXIT_T: 	sys_exit_t(tf);		break;
 		case SYS_EXIT_P: 	sys_exit_p(tf);		break;
+		case SYS_WAIT: 		sys_wait(tf);		break;
+		case SYS_WAIT_PID: 	sys_waitpid(tf);	break;
 		
 		default:
 		panic("unknown syscall");
@@ -412,4 +416,18 @@ static void sys_exit_p(trapframe_t *tf) {
 	panic("exit process");
 }
 
+static void sys_wait(trapframe_t *tf) {
+	SYSRET(-1);
+}
 
+static void sys_waitpid	(trapframe_t *tf) {
+
+	int pid = ARG(tf, 0, int);
+	logfln ("wait on pid: %d", pid);
+
+	proc_t *p = get_proc(pid);
+
+	while (p->state == S_USED);
+
+	SYSRET(-1);
+}

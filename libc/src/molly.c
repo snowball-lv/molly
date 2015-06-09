@@ -71,6 +71,11 @@ void exit_p() {
 	syscall_do(SYS_EXIT_P);
 }
 
+int wait() {
+	return syscall_do(SYS_WAIT);
+}
 
-
+void waitpid(int pid) {
+	syscall_do(SYS_WAIT_PID, pid);
+}
 

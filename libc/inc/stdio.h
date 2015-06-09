@@ -25,3 +25,4 @@ size_t fwrite (const void *ptr, size_t size, size_t count, FILE *stream);
 int printf(const char *format, ... );
 
 int fileno(FILE *stream);
+char *gets(char *str);

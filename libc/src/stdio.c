@@ -86,3 +86,31 @@ int printf(const char *format, ...) {
 int fileno(FILE *stream) {
 	return stream->fd;
 }
+
+char *gets(char *str) {
+
+	int fd = fileno(stdin);
+	char *ptr = str;
+
+	int total = 0;
+	int count = 0;
+
+	while ((count = read(fd, ptr, 4096)) > 0) {
+		total += count;
+
+		//check if last charater is new line
+		if (ptr[count - 1] == '\n') {
+			//replace new line with null
+			ptr[count - 1] = 0;
+			break;
+		}
+
+		ptr += count;
+	}
+
+	//error
+	if (count == -1)
+		return 0;
+
+	return (total > 0) ? str : 0;
+}
