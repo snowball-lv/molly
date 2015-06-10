@@ -92,9 +92,17 @@ int load_image(char *bin, entry_f *e, uintptr_t *brk) {
 	ptr = (char *)opt;
 	ptr += h->SizeOfOptionalHeader;
 	
+	logfln("pe sections: %d", h->NumberOfSections);
+
 	for (int i = 0; i < h->NumberOfSections; i++) {
 	
 		IMAGE_SECTION_HEADER *sh = (IMAGE_SECTION_HEADER *)ptr;
+
+		char name[IMAGE_SIZEOF_SHORT_NAME + 1] = { 0 };
+		memcpy(name, sh->Name, IMAGE_SIZEOF_SHORT_NAME);
+		logf("pe section name: [%s]", name);
+		logf(", raw size: %d", sh->SizeOfRawData);
+		logfln(", virt size: %d", sh->Misc.VirtualSize);
 		
 		ptr += sizeof(IMAGE_SECTION_HEADER);
 	
@@ -119,25 +127,3 @@ int load_image(char *bin, entry_f *e, uintptr_t *brk) {
 
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

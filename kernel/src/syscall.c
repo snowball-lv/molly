@@ -315,7 +315,7 @@ static void sys_write(trapframe_t *tf) {
 	void *buff 	= ARG(tf, 1, void *);
 	int count 	= ARG(tf, 2, int);
 	
-	logfln("write fd: %d", fd);
+	//logfln("write fd: %d", fd);
 	
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
@@ -336,7 +336,7 @@ static void sys_read(trapframe_t *tf) {
 	void *buff 	= ARG(tf, 1, void *);
 	int count 	= ARG(tf, 2, int);
 	
-	logfln("read fd: %d", fd);
+	//logfln("read fd: %d", fd);
 	
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
@@ -431,3 +431,5 @@ static void sys_waitpid	(trapframe_t *tf) {
 
 	SYSRET(-1);
 }
+
+

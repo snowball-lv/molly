@@ -3,6 +3,7 @@
 #include <molly.h>
 #include <limits.h>
 #include <string.h>
+#include <stdarg.h>
 
 
 FILE *stdin;
@@ -79,8 +80,80 @@ size_t fwrite (const void *ptr, size_t size, size_t count, FILE *stream) {
 	return elems;
 }
 
+int putchar(int character) {
+	fwrite((char[]){character}, 1, 1, stdout);
+	return character;
+}
+
+int puts(const char *str) {
+	while (*str != 0)
+		putchar(*str++);
+	return 1;
+}
+
+static void printDec(int value) {
+	char buffer[(sizeof(int) * 8) + 1];
+	char *str = itoa(value, buffer, 10);
+	puts(str);
+}
+
+static void printHex(int value) {
+	char buffer[(sizeof(int) * 8) + 1];
+	char *str = itoa(value, buffer, 16);
+	puts("0x");
+	puts(str);
+}
+
+static void printBin(int value) {
+	char buffer[(sizeof(int) * 8) + 1];
+	char *str = itoa(value, buffer, 2);
+	puts(str);
+	puts("b");
+}
+
 int printf(const char *format, ...) {
-	fwrite(format, strlen(format), 1, stdout);
+	
+	va_list args;
+    va_start(args, format);
+	
+	const char *str = format;
+
+	for (size_t i = 0; str[i] != 0; i++) {
+		if (str[i] == '%') {
+		
+			switch (str[i + 1]) {
+			case 'd':
+				printDec(va_arg(args, int));
+				i++;
+				break;
+			case 'c':
+				putchar(va_arg(args, int));
+				i++;
+				break;
+			case 'x':
+				printHex(va_arg(args, int));
+				i++;
+				break;
+			case 'b':
+				printBin(va_arg(args, int));
+				i++;
+				break;
+			case 's':
+				puts(va_arg(args, char *));
+				i++;
+				break;
+			default:
+				putchar(str[i]);
+				break;
+			}
+			
+		} else {
+			putchar(str[i]);
+		}
+	}
+	
+	va_end(args);
+	return 1;
 }
 
 int fileno(FILE *stream) {

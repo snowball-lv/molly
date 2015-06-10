@@ -10,6 +10,7 @@
 #include <scancodes.h>
 #include <pipe.h>
 #include <ringbuffer.h>
+#include <stdlib.h>
 
 #define VGA_MEM 		(0xb8000 + KERNEL_OFF)
 #define WIDTH 			80
@@ -53,6 +54,7 @@ static void newLine() {
 	}
 }
 
+
 static void putc(char character) {
 
 	if (xPos >= WIDTH)
@@ -79,37 +81,6 @@ static void putc(char character) {
 static void puts(const char *str) {
 	while (*str != 0)
 		putc(*str++);
-}
-
-/**
- * C++ version 0.4 char* style "itoa":
- * Written by Lukás Chmela
- * Released under GPLv3.
- */
-char *itoa(int value, char *result, int base) {
-
-	// check that the base if valid
-	if (base < 2 || base > 36) { *result = '\0'; return result; }
-
-	char* ptr = result, *ptr1 = result, tmp_char;
-	int tmp_value;
-
-	do {
-		tmp_value = value;
-		value /= base;
-		*ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
-	} while ( value );
-
-	// Apply negative sign
-	if (tmp_value < 0) *ptr++ = '-';
-	*ptr-- = '\0';
-	while(ptr1 < ptr) {
-		tmp_char = *ptr;
-		*ptr--= *ptr1;
-		*ptr1++ = tmp_char;
-	}
-	
-	return result;
 }
 
 static void printDec(int value) {
@@ -242,7 +213,7 @@ static int console_close(fs_node *fn) {
 }
 
 static int console_write(fs_node *fn, void *buff, size_t off, int count) {
-	logfln("console write");
+	//logfln("console write");
 
 	console_node *cn = (console_node *)fn;
 	vnode *vga = cn->vga;
@@ -251,7 +222,7 @@ static int console_write(fs_node *fn, void *buff, size_t off, int count) {
 }
 
 static int console_read(fs_node *fn, void *buff, size_t off, int count) {
-	logfln("console read");
+	//logfln("console read");
 
 	if (count == 0)
 		return 0;
@@ -331,7 +302,7 @@ static int vga_close(fs_node *fn) {
 }
 
 static int vga_write(fs_node *fn, void *buff, size_t off, int count) {
-	logfln("vga write");
+	//logfln("vga write");
 
 	uint8_t *cbuff = buff;
 	for (int i = 0; i < count; i++)

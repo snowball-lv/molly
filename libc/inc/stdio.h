@@ -26,3 +26,5 @@ int printf(const char *format, ... );
 
 int fileno(FILE *stream);
 char *gets(char *str);
+int puts(const char *str);
+int putchar(int character);
