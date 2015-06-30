@@ -88,6 +88,8 @@ int load_image(char *bin, entry_f *e, uintptr_t *brk) {
 	
 	intptr_t entry = opt->ImageBase + opt->AddressOfEntryPoint;
 	*e = (entry_f)entry;
+
+	logfln("pe entry: %x", entry);
 	
 	ptr = (char *)opt;
 	ptr += h->SizeOfOptionalHeader;

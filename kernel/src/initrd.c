@@ -140,7 +140,7 @@ static int initrd_seek(fs_node *fn, size_t cur, int off, seek_t whence) {
 #define ROUND_UP(v)	((char *)(((uintptr_t)(v) + 7) & ~(7)))
 
 static int initrd_read_dir(fs_node *fn, size_t off, dirent_t *e) {
-	logfln("initrd read dir: %d", off);
+	//logfln("initrd read dir: %d", off);
 
 	char *ptr = (char *)&_RAMFS_START;
 	size_t count = *(size_t *)ptr;
@@ -183,4 +183,3 @@ static vnode initrd = {
 
 	.seek = initrd_seek
 };
-

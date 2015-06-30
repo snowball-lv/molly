@@ -4,6 +4,7 @@
 #include <string.h>
 #include <gdt.h>
 #include <klib.h>
+#include <proc.h>
 
 #define ATTR __attribute__((packed))
 
@@ -74,6 +75,9 @@ static void pf_handler(trapframe_t *tf) {
 		"the fault was caused by an instruction fetch" :
 		"This only applies when the No-Execute bit is supported and enabled");
 	
+	kprintfln("-------------------------");
+	kprintfln("pid: %d", get_current_pid());
+
 	panic("*** page fault");
 }
 

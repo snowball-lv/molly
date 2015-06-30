@@ -2,6 +2,7 @@
 #include <pit.h>
 #include <console.h>
 #include <kalloc.h>
+#include <debug.h>
 #include <string.h>
 
 void halt() {
@@ -23,13 +24,18 @@ void disable_ints() {
 
 int enter_critical_section() {
 	int state = read_flags() & F_INTERRUPTS;
-	__asm__("cli");
+	if (state) {
+		__asm__("cli");
+		logfln("ints disabled");
+	}
 	return state;
 }
 
 void exit_critical_section(int interrupt_state) {
-	if (interrupt_state) //if were enabled
+	if (interrupt_state) {//if were enabled
+		logfln("ints enabled");
 		__asm__("sti");
+	}
 }
 
 const char *kstrchr(const char *str, int character) {

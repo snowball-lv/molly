@@ -21,11 +21,29 @@ int main(int argc, char **argv) {
 
 	while (gets(buffer) != 0) {
 
-		//process line
+		//process lineŗ
+
+		if (strcmp(buffer, "quit") == 0) {
+			break;
+		}
+
+		int pid = exec(
+			buffer,
+			fileno(stdin),
+			fileno(stdout),
+			fileno(stderr));
+
+		if (pid < 0) {
+			printf("couldn't start process: [%s]\n", buffer);
+		} else {
+			//wait for sub-proc to quit
+			waitpid(pid);
+		}
 
 		printf("%s>", cwd);
 	}
 
 	return 0;
 }
+
 

@@ -26,6 +26,10 @@ static proc_t procs[MAX_PROCS] = {
 
 static int cp_num = 0;
 
+int get_current_pid() {
+	return cp_num;
+}
+
 proc_t *get_proc(size_t num) {
 	return &procs[num];
 }
@@ -167,7 +171,7 @@ void set_up_thread(thread_t *t, entry_f entry, void *stack) {
 	
 	PUSH(0x20 | 0x3);	//ss
 	PUSH(t->usp);		//esp
-	PUSH(read_flags());	//eflags
+	PUSH(read_flags() | F_INTERRUPTS);	//eflags
 	PUSH(0x18 | 0x3);	//cs
 	PUSH(t->entry);		//eip
 	
@@ -247,13 +251,14 @@ static void *psbrk(proc_t *p, size_t size) {
 }
 
 int create_proc(char *wd, char *img, int in, int out, int err) {
-	
+
 	//get free proc slot
 	int pid = fetch_free_proc();
 	
 	//no slot found
-	if (pid < 0)
+	if (pid < 0) {
 		return -1;
+	}
 		
 	//new proc
 	proc_t *p = &procs[pid];
@@ -268,6 +273,8 @@ int create_proc(char *wd, char *img, int in, int out, int err) {
 	pd_t *cpd = (pd_t *)0xfffff000;
 	void *cpd_phys = vtp(cpd);
 	
+	int is = enter_critical_section();
+
 	//switch to new pd
 	load_PDBR(vtp(p->pd));
 	
@@ -275,11 +282,12 @@ int create_proc(char *wd, char *img, int in, int out, int err) {
 	uintptr_t brk = 0;
 	entry_f entry = 0;
 	int imgerr = load_image(img, &entry, &brk);
-	
+
 	//failed to load image
 	if (imgerr < 0) {
 		//switch back to callers pd
 		load_PDBR(cpd_phys);
+		exit_critical_section(is);
 		return -1;
 	}
 		
@@ -319,7 +327,9 @@ int create_proc(char *wd, char *img, int in, int out, int err) {
 
 	//make process ready for sched.
 	p->state = S_USED;
-	
+
+	exit_critical_section(is);
+
 	return pid;
 }
 

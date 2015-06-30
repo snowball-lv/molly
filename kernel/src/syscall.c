@@ -371,7 +371,7 @@ static void sys_readdir	(trapframe_t *tf) {
 	int fd 		= ARG(tf, 0, int);
 	dirent_t *e = ARG(tf, 1, dirent_t *);
 
-	logfln("read dir: %d", fd);
+	//logfln("read dir: %d", fd);
 
 	proc_t *p = cproc();
 	file_handle *fh = &p->files[fd];
@@ -420,16 +420,14 @@ static void sys_wait(trapframe_t *tf) {
 	SYSRET(-1);
 }
 
-static void sys_waitpid	(trapframe_t *tf) {
+static void sys_waitpid(trapframe_t *tf) {
 
 	int pid = ARG(tf, 0, int);
 	logfln ("wait on pid: %d", pid);
 
-	proc_t *p = get_proc(pid);
-
-	while (p->state == S_USED);
+	while (get_proc(pid)->state == S_USED);
+	//while (1);
 
 	SYSRET(-1);
 }
-
 
